@@ -201,7 +201,7 @@ const SignUpPage = () => {
             router.push('/college');
             break;
           case 'company':
-            router.push('/company');
+            router.push('/company/dashboard');
             break;
           default:
             router.push('/');
