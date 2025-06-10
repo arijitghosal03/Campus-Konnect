@@ -276,7 +276,7 @@ const SignUpPage = () => {
           </div>
         </div>
       </nav>
-    
+    {/* Background Gradient */}
     <div style={{
       background: "linear-gradient(135deg, rgba(116, 148, 236, 0.1) 0%, rgba(255, 255, 255, 1) 50%, rgba(201, 214, 255, 0.3) 100%)",
       minHeight: "100vh",
