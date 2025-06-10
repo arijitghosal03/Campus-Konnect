@@ -23,6 +23,13 @@ const SignUpPage = () => {
   const [otpSent, setOtpSent] = useState(false);
   const [error, setError] = useState("");
 
+  // Simple check for logged-in state (customize as needed)
+  const isLoggedIn = typeof window !== "undefined" && (
+    localStorage.getItem('college') ||
+    localStorage.getItem('student') ||
+    localStorage.getItem('company')
+  );
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -221,30 +228,51 @@ const SignUpPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-          {/* Header */}
-          <header className="bg-[#1B4242] text-white shadow-lg">
-            <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-              <div className="flex items-center gap-4">
-                <Image
-                  src="/sar.png"
-                  alt="Logo"
-                  width={48}
-                  height={48}
-                  className="rounded-lg"
-                />
-                <span className="text-2xl font-bold">Campus Konnect</span>
+
+                     <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">S</span>
               </div>
-                    <nav className="flex items-center gap-6">
-            <Link href="/" className="hover:text-gray-300 transition">
-              Home
-            </Link>
-            <Link href="/about" className="hover:text-gray-300 transition">
-              About
-            </Link>
-          
-          </nav>
+              <span className="ml-2 text-xl font-bold text-gray-900">Campus Konnect</span>
+            </div>
+
+            <div className="hidden md:flex items-center space-x-8">
+              <Link href="/about">
+                <div className="text-gray-700 hover:text-blue-600 font-medium cursor-pointer">Team</div>
+              </Link>
+              <Link href="/posts">
+                <div className="text-gray-700 hover:text-blue-600 font-medium cursor-pointer">Posts</div>
+              </Link>
+              <Link href="/">
+                <div className="text-gray-700 hover:text-blue-600 font-medium cursor-pointer">Home</div>
+              </Link>
+              
+              {!isLoggedIn && <Link href="/login">
+          <div className="text-gray-700 hover:text-blue-600 font-medium cursor-pointer">
+            Login
+          </div>
+        </Link>}
+         {isLoggedIn && <button
+          onClick={() => {
+            localStorage.removeItem('college');
+            localStorage.removeItem('student'); 
+            localStorage.removeItem('company');  // Clear login info
+            window.location.href="/"
+          }}
+           className="text-gray-700 hover:text-blue-600 font-medium cursor-pointer"
+        >
+          Logout
+        </button>}
+            </div>
+
+    
+          </div>
         </div>
-      </header>
+      </nav>
+    
     <div style={{
       background: "linear-gradient(135deg, rgba(116, 148, 236, 0.1) 0%, rgba(255, 255, 255, 1) 50%, rgba(201, 214, 255, 0.3) 100%)",
       minHeight: "100vh",
