@@ -1,0 +1,206 @@
+[33mcommit 10aa0ced46687f837e3b0dcb3afbc86c408d568b[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m)[m
+Author: arijit03 <arijitghosal0309@gmail.com>
+Date:   Tue Jan 21 10:39:40 2025 +0530
+
+    Made the company Dashboard
+
+[33mcommit b681dc772d843ede27f24e71b8aab21736094b44[m
+Author: arijit03 <arijitghosal0309@gmail.com>
+Date:   Tue Jan 21 10:33:50 2025 +0530
+
+    Made the company Dashboard
+
+[33mcommit d50d640c0cde360aa136ec7c4fc6b5c1cc1dfc98[m
+Author: arijit03 <arijitghosal0309@gmail.com>
+Date:   Tue Jan 21 10:31:44 2025 +0530
+
+    Made the company Dashboard
+
+[33mcommit 1345a6c08c2db032c0204436779f56a3102598f1[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: arijit03 <arijitghosal0309@gmail.com>
+Date:   Sat Jan 18 20:49:55 2025 +0530
+
+    updated images at public extensions 2
+
+[33mcommit 9231962211cb90d9c436e1fb939cbbac99d8cb39[m
+Author: arijit03 <arijitghosal0309@gmail.com>
+Date:   Sat Jan 18 20:47:03 2025 +0530
+
+    updated images at public extensions
+
+[33mcommit 452201b0882556f830f1eb909f22b437c60bb96f[m
+Author: arijit03 <arijitghosal0309@gmail.com>
+Date:   Sat Jan 18 20:41:37 2025 +0530
+
+    updated images at public
+
+[33mcommit d86b41bd3e17325a49d2c91362c5c8f74edd130b[m
+Author: arijit03 <arijitghosal0309@gmail.com>
+Date:   Sat Jan 18 20:28:10 2025 +0530
+
+    final submission
+
+[33mcommit ab4ff909ef0cc82c8e8c29ded233121a85d679b0[m
+Author: arijit03 <arijitghosal0309@gmail.com>
+Date:   Sat Jan 18 20:08:28 2025 +0530
+
+    final updates
+
+[33mcommit 576918e96938f240fc165af566752c876891f9ee[m
+Author: arijit03 <arijitghosal0309@gmail.com>
+Date:   Thu Jan 16 22:13:31 2025 +0530
+
+    updated UI for about  and student details
+
+[33mcommit 184e6d8b11a503c99f7b5af8d78a2b908a3a574c[m
+Author: arijit03 <arijitghosal0309@gmail.com>
+Date:   Thu Jan 16 01:29:58 2025 +0530
+
+    updated the about page and added the company page with student details
+
+[33mcommit bf3a5470a516b85c60cbe91635b0e40fcc34f4b9[m
+Author: Ramik Mukherjee <ramik.14062000@gmail.com>
+Date:   Thu Jan 16 00:55:38 2025 +0530
+
+    about page created
+
+[33mcommit 9ccd1e08a88e8e5960498172fe7e678c1569242a[m
+Author: Ramik Mukherjee <ramik.14062000@gmail.com>
+Date:   Thu Jan 16 00:49:22 2025 +0530
+
+    logout fixed
+
+[33mcommit 9be0c110fbb06c86594109db26f9a33518db3c8d[m
+Author: arijit03 <arijitghosal0309@gmail.com>
+Date:   Thu Jan 16 00:32:53 2025 +0530
+
+    login changes
+
+[33mcommit 9cd146eba1740b68c941236b2d76a75515e4a587[m
+Author: Ramik Mukherjee <ramik.14062000@gmail.com>
+Date:   Wed Jan 15 23:41:15 2025 +0530
+
+    login logic
+
+[33mcommit 4f9a51813a01faa9f096027fe4d075f148090d1a[m
+Author: Ramik Mukherjee <ramik.14062000@gmail.com>
+Date:   Wed Jan 15 03:25:01 2025 +0530
+
+    added routing after login
+
+[33mcommit b89cce9f90044b7ad7f389e45a983df54a6f35de[m
+Author: arijit03 <arijitghosal0309@gmail.com>
+Date:   Wed Jan 15 02:57:36 2025 +0530
+
+    updated the panels page
+
+[33mcommit 3dc072a69b030f504dedcfa4fa4148dd27a4fd7f[m
+Author: arijit03 <arijitghosal0309@gmail.com>
+Date:   Wed Jan 15 02:33:54 2025 +0530
+
+    login form changed
+
+[33mcommit 277c2a7187e45daca7828d4bdcc1735529021a5f[m
+Author: Ramik Mukherjee <ramik.14062000@gmail.com>
+Date:   Wed Jan 15 02:13:10 2025 +0530
+
+    added new student form and login components
+
+[33mcommit c60a1ea75d48840651e9cebaa8a617e53b63d99b[m
+Merge: 1f1bdef fba1b61
+Author: Arijit Ghosal <97433331+arijitghosal03@users.noreply.github.com>
+Date:   Sat Jan 4 22:04:09 2025 +0530
+
+    Merge pull request #1 from ramik10/arijit
+    
+    updated student homescreen
+
+[33mcommit fba1b61e5f7caab9790850587615b007e95c4251[m[33m ([m[1;31morigin/arijit[m[33m, [m[1;32marijit[m[33m)[m
+Author: arijit03 <arijitghosal0309@gmail.com>
+Date:   Sat Jan 4 22:01:43 2025 +0530
+
+    updated name from doe to dam
+
+[33mcommit d5acfa44f6aa87243145ed72f4fa8e430353d02d[m
+Author: arijit03 <arijitghosal0309@gmail.com>
+Date:   Sat Jan 4 00:05:08 2025 +0530
+
+    updated student homescreen
+
+[33mcommit 1f1bdeff0be6fa30526189bd35efe7242e576ba3[m
+Author: arijit03 <arijitghosal0309@gmail.com>
+Date:   Fri Dec 27 16:47:40 2024 +0530
+
+    Updated Homepage
+
+[33mcommit ac8152bc888c5977081a0b0f6b451abc5beeb472[m
+Author: arijit03 <arijitghosal0309@gmail.com>
+Date:   Fri Dec 27 16:42:37 2024 +0530
+
+    Updated HomePage
+
+[33mcommit 0c75b5359dbf01ec4d2398acb4c3b1549780bc9d[m
+Author: Ramik Mukherjee <ramik.14062000@gmail.com>
+Date:   Fri Dec 27 15:45:22 2024 +0530
+
+    temp changes 3
+
+[33mcommit c1280d6151d149f11a686d49d37cf3376d990a20[m
+Author: Ramik Mukherjee <ramik.14062000@gmail.com>
+Date:   Fri Dec 27 15:34:45 2024 +0530
+
+    temp changes 2
+
+[33mcommit e0e622f09b8ade2c8a3bc5dc74904eb2a7389d72[m
+Author: Ramik Mukherjee <ramik.14062000@gmail.com>
+Date:   Fri Dec 27 15:30:18 2024 +0530
+
+    temp changes
+
+[33mcommit 9858e8e894f6af2ff4a3e6f4eb79e9b068b31407[m
+Author: Ramik Mukherjee <ramik.14062000@gmail.com>
+Date:   Fri Dec 27 14:23:05 2024 +0530
+
+    added forms and routes
+
+[33mcommit 4addb328d41f7422bb599974894278cae356c4a1[m
+Author: Ramik Mukherjee <ramik.14062000@gmail.com>
+Date:   Fri Dec 27 13:18:33 2024 +0530
+
+    added form component
+
+[33mcommit 50310d57d6d48728e6968263d77f4734653e462f[m
+Author: SAYANTAN DAM <98486330+Sayantan6@users.noreply.github.com>
+Date:   Tue Dec 10 19:17:21 2024 +0530
+
+    Create login_form
+
+[33mcommit ab00190e484b0e8f44f7b2d6724050eab23f6037[m
+Author: Ramik Mukherjee <ramik.14062000@gmail.com>
+Date:   Tue Dec 10 16:04:57 2024 +0530
+
+    login page done
+
+[33mcommit 3b5232ff75b5bf87bbb66087abb7ad254a70af08[m
+Author: Ramik Mukherjee <ramik.14062000@gmail.com>
+Date:   Tue Dec 10 15:19:04 2024 +0530
+
+    ui fix
+
+[33mcommit b95471e5cbe18a445a8dab821581673128ec55af[m
+Author: Ramik Mukherjee <ramik.14062000@gmail.com>
+Date:   Tue Dec 10 15:10:49 2024 +0530
+
+    landing page ui done
+
+[33mcommit 91ceb2e6c8ed9d7b62a5fab22b69868b4078db26[m
+Author: Ramik Mukherjee <ramik.14062000@gmail.com>
+Date:   Tue Nov 19 02:10:53 2024 +0530
+
+    init
+
+[33mcommit d68d1326de13b67b05bc9385d2454e0e90ab369d[m
+Author: Ramik Mukherjee <ramik.14062000@gmail.com>
+Date:   Mon Nov 18 23:30:56 2024 +0530
+
+    Initial commit from Create Next App

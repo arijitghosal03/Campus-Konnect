@@ -1,0 +1,212 @@
+[
+  {
+    "id": 1,
+    "name": "Arijit Ghosal",
+    "roll": "20XX01CS001",
+    "branch": "Computer Science",
+    "skills": ["JavaScript", "React", "Node.js"],
+    "cgpa": "9.1",
+    "year": "Final",
+    "image": "/Ag.png",
+    "internships": [
+      "Frontend Developer at XYZ Corp",
+      "Backend Intern at ABC Ltd"
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Ramik Mukherjee",
+    "roll": "20XX01EC002",
+    "branch": "Electronics and Communication",
+    "skills": ["C++", "Embedded Systems", "VHDL"],
+    "cgpa": "8.7",
+    "year": "Third",
+    "image": "/ramik.jpg",
+    "internships": [
+      "Embedded Systems Intern at DEF Inc",
+      "Research Assistant at GHI Labs"
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Sayanatan Dam",
+    "roll": "20XX01ME003",
+    "branch": "Mechanical Engineering",
+    "skills": ["CAD", "MATLAB", "Finite Element Analysis"],
+    "cgpa": "8.5",
+    "year": "Second",
+    "image": "/sayantan.jpg",
+    "internships": [
+      "Design Intern at JKL Designs",
+      "Thermal Analysis Intern at MNO Engineering"
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Shehenaz Islam",
+    "roll": "20XX01IT004",
+    "branch": "Information Technology",
+    "skills": ["Python", "Django", "Machine Learning"],
+    "cgpa": "9.3",
+    "year": "Final",
+    "image": "/shehenaz.jpg",
+    "internships": [
+      "Data Science Intern at PQR Analytics",
+      "Full-Stack Developer Intern at STU Solutions"
+    ]
+  },
+  {
+    "id": 5,
+    "name": "SK Nasir Hosen",
+    "roll": "20XX01CE005",
+    "branch": "Civil Engineering",
+    "skills": ["AutoCAD", "Structural Analysis", "Surveying"],
+    "cgpa": "8.2",
+    "year": "Third",
+    "image": "/nasir.jpg",
+    "internships": [
+      "Site Engineer Intern at VWX Constructions",
+      "Structural Analysis Intern at YZ Builders"
+    ]
+  },
+  {
+    "id": 6,
+    "name": "Ananya Gupta",
+    "roll": "20XX01CS006",
+    "branch": "Computer Science",
+    "skills": ["Python", "Flask", "Artificial Intelligence"],
+    "cgpa": "9.0",
+    "year": "Third",
+    "image": "/ananya.jpg",
+    "internships": [
+      "AI Intern at OpenAI Research",
+      "Backend Developer at Zeta Solutions"
+    ]
+  },
+  {
+    "id": 7,
+    "name": "Rajat Sharma",
+    "roll": "20XX01EC007",
+    "branch": "Electronics and Communication",
+    "skills": ["Verilog", "PCB Design", "IoT"],
+    "cgpa": "8.4",
+    "year": "Second",
+    "image": "/rajat.jpg",
+    "internships": [
+      "IoT Intern at SmartWorks",
+      "PCB Designer at NanoCircuits"
+    ]
+  },
+  {
+    "id": 8,
+    "name": "Ishika Singh",
+    "roll": "20XX01IT008",
+    "branch": "Information Technology",
+    "skills": ["Java", "Spring Boot", "Cloud Computing"],
+    "cgpa": "9.5",
+    "year": "Final",
+    "image": "/ishika.jpg",
+    "internships": [
+      "Cloud Engineer Intern at AWS Solutions",
+      "Java Developer Intern at Infosys"
+    ]
+  },
+  {
+    "id": 9,
+    "name": "Pratyush Nair",
+    "roll": "20XX01ME009",
+    "branch": "Mechanical Engineering",
+    "skills": ["SolidWorks", "ANSYS", "3D Printing"],
+    "cgpa": "8.3",
+    "year": "Third",
+    "image": "/pratyush.jpg",
+    "internships": [
+      "Design Engineer Intern at Tesla India",
+      "Product Testing Intern at Bharat Motors"
+    ]
+  },
+  {
+    "id": 10,
+    "name": "Ritika Basu",
+    "roll": "20XX01CE010",
+    "branch": "Civil Engineering",
+    "skills": ["Revit", "Geotechnical Analysis", "Concrete Design"],
+    "cgpa": "8.8",
+    "year": "Second",
+    "image": "/ritika.jpg",
+    "internships": [
+      "Structural Design Intern at BuildRight",
+      "Geotechnical Analysis Intern at GeoTech Solutions"
+    ]
+  },
+  {
+    "id": 11,
+    "name": "Arvind Krishnan",
+    "roll": "20XX01EE011",
+    "branch": "Electrical Engineering",
+    "skills": ["Power Systems", "Circuit Design", "MATLAB"],
+    "cgpa": "8.9",
+    "year": "Final",
+    "image": "/arvind.jpg",
+    "internships": [
+      "Power Systems Intern at Siemens",
+      "Circuit Design Intern at ABB"
+    ]
+  },
+  {
+    "id": 12,
+    "name": "Sneha Kapoor",
+    "roll": "20XX01CS012",
+    "branch": "Computer Science",
+    "skills": ["Data Science", "Pandas", "Tableau"],
+    "cgpa": "9.6",
+    "year": "Final",
+    "image": "/sneha.jpg",
+    "internships": [
+      "Data Analyst Intern at TCS",
+      "Machine Learning Intern at Accenture AI Labs"
+    ]
+  },
+  {
+    "id": 13,
+    "name": "Vikram Singh",
+    "roll": "20XX01AE013",
+    "branch": "Aerospace Engineering",
+    "skills": ["Aerodynamics", "CFD", "Flight Mechanics"],
+    "cgpa": "8.7",
+    "year": "Third",
+    "image": "/vikram.jpg",
+    "internships": [
+      "Aerodynamics Intern at ISRO",
+      "Flight Mechanics Intern at Boeing India"
+    ]
+  },
+  {
+    "id": 14,
+    "name": "Meenal Joshi",
+    "roll": "20XX01BT014",
+    "branch": "Biotechnology",
+    "skills": ["CRISPR", "Bioinformatics", "Molecular Biology"],
+    "cgpa": "9.2",
+    "year": "Second",
+    "image": "/meenal.jpg",
+    "internships": [
+      "Bioinformatics Intern at Genentech",
+      "Research Assistant at Biocon"
+    ]
+  },
+  {
+    "id": 15,
+    "name": "Saurabh Raj",
+    "roll": "20XX01EE015",
+    "branch": "Electrical Engineering",
+    "skills": ["Embedded Systems", "Microcontrollers", "VLSI"],
+    "cgpa": "8.6",
+    "year": "Third",
+    "image": "/saurabh.jpg",
+    "internships": [
+      "Embedded Systems Intern at Qualcomm",
+      "VLSI Intern at Texas Instruments"
+    ]
+  }
+]
