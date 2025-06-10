@@ -26,6 +26,72 @@ const ProfessionalLandingPage = () => {
   const partnerLogos = [
     "Microsoft", "Google", "Amazon", "IBM", "Oracle", "Salesforce"
   ];
+  const testimonials = [
+  {
+    id: 1,
+    name: "Sarah Brown",
+    role: "Senior Designer",
+    company: "Wonderland Design Co.",
+    avatar: "/api/placeholder/50/50",
+    text: "I've had the pleasure of working with teams that truly understand design. The AI agents helped us streamline our design process and deliver exceptional results for our clients.",
+    rating: 5
+  },
+  {
+    id: 2,
+    name: "Sophia Earwhisper",
+    role: "Art Director",
+    company: "Creative Studios",
+    avatar: "/api/placeholder/50/50",
+    text: "I really appreciate!! Congue mauris rhoncus eleifend vel elit rhoncus ultrices vel lacus eros varius consequat",
+    rating: 5
+  },
+  {
+    id: 3,
+    name: "Victoria Wilson",
+    role: "Creative Lead",
+    company: "Innovation Desk Co.",
+    avatar: "/api/placeholder/50/50",
+    text: "I was very impressed! Duis malesuada ultricies mi quis, in mollis placerat sollicitudin accumsan. Adipiscing eget dui volutpat quis venenatis quis. Viverra facilisis ante tellus lorem suspendisse augue aenean sit.",
+    rating: 5
+  },
+  {
+    id: 4,
+    name: "Julie Chen",
+    role: "Marketing Director",
+    company: "Brand Solutions Inc.",
+    avatar: "/api/placeholder/50/50",
+    text: "Good Job! Lorem ipsum dolor sit amet lorem amet ipsum lorem dolor sit amet consectetur adipiscing elit sed do eiusmod",
+    rating: 5,
+    featured: true
+  },
+  {
+    id: 5,
+    name: "Dave Richardson",
+    role: "Product Manager",
+    company: "Tech Innovations Ltd.",
+    avatar: "/api/placeholder/50/50",
+    text: "Dave Richardson was a true professional when collaborating with our team. His attention to detail and creative approach resulted in outstanding deliverables.",
+    rating: 5
+  },
+  {
+    id: 6,
+    name: "Sophie Clark",
+    role: "Brand Strategist",
+    company: "Creative Agency Pro",
+    avatar: "/api/placeholder/50/50",
+    text: "Sophie's collaborative approach and strategic thinking helped transform our brand identity. The results exceeded our expectations in every way.",
+    rating: 5
+  },
+  {
+    id: 7,
+    name: "Michael Torres",
+    role: "Co-Founder",
+    company: "Startup Dynamics Corp",
+    avatar: "/api/placeholder/50/50",
+    text: "Working with Michael was an absolute pleasure. His expertise in AI integration and business strategy helped accelerate our growth significantly.",
+    rating: 5
+  }
+];
 
   const workflowSteps = [
     {
@@ -77,7 +143,16 @@ const ProfessionalLandingPage = () => {
       items: ["Real-time analytics", "Automated reporting", "Smart notifications", "Performance tracking"]
     }
   ];
+  const cardVariants = [
+    "w-72 h-auto", // standard
+    "w-80 h-auto", // slightly wider
+    "w-64 h-auto", // narrower
+    "w-76 h-auto", // medium-wide
+  ];
 
+  const getRandomCardClass = (index: number) => {
+    return cardVariants[index % cardVariants.length];
+  };
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
@@ -103,6 +178,9 @@ const ProfessionalLandingPage = () => {
               </Link>
                <Link href="/posts">
                 <div className="text-gray-700 hover:text-blue-600 font-medium cursor-pointer">Posts</div>
+              </Link>
+               <Link href="#testmonials">
+                <div className="text-gray-700 hover:text-blue-600 font-medium cursor-pointer">Testamonials</div>
               </Link>
               
               
@@ -151,9 +229,12 @@ const ProfessionalLandingPage = () => {
                 platform that connects students, faculty, and administration.
               </p>
               <div className="flex gap-4 mb-16">
-                <button className="bg-blue-600 text-white px-8 py-4 rounded-xl font-semibold hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg">
-                  Book a demo
-                </button>
+                
+                <Link href="/register">
+                  <div className="bg-blue-600 text-white px-8 py-4 rounded-xl font-semibold hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                    Get Started
+                  </div>
+                </Link>
                 <button className="border border-gray-300 text-gray-700 px-8 py-4 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-300 transform hover:scale-105">
                   Learn more
                 </button>
@@ -354,37 +435,114 @@ const ProfessionalLandingPage = () => {
         </div>
       </section>
 
-      {/* Integrations Section */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-5xl font-bold mb-4 text-gray-900">
-              Integrate All Your Tools<br />
-              <span className="text-blue-600">With AI Agents</span>
-            </h2>
-          </div>
-
-          <div className="bg-white rounded-2xl p-12 shadow-sm border">
-            <div className="flex justify-center items-center gap-8 mb-12">
-              {integrations.map((integration, index) => (
-                <div key={index} className="flex items-center gap-3">
-                  <div className={`w-10 h-10 ${integration.color} rounded-xl flex items-center justify-center`}>
-                    <span className="text-white font-bold text-sm">{integration.name.charAt(0)}</span>
-                  </div>
-                  <span className="font-medium text-gray-800">{integration.name}</span>
-                </div>
-              ))}
-            </div>
-            
-            <div className="text-center">
-              <button className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
-                Explore Integrations
-              </button>
-            </div>
-          </div>
+{/*Testamonials Section*/}
+    <section id ="testmonials" className="py-20 bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <h2 className="text-5xl font-bold mb-4 text-gray-900">
+            What Companies Say<br />
+            <span className="text-blue-600">About our platform</span>
+          </h2>
         </div>
-      </section>
 
+        <div className="bg-white rounded-3xl p-12 shadow-xl border relative overflow-hidden min-h-[700px]">
+          {/* Large decorative quote marks */}
+          <div className="absolute top-8 left-12 text-8xl text-gray-300 font-serif leading-none">"</div>
+          <div className="absolute bottom-8 right-12 text-8xl text-gray-300 font-serif leading-none rotate-180">"</div>
+          
+          {/* Scattered testimonial cards layout */}
+          <div className="relative h-full">
+            {/* Featured large testimonial - center */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 z-10">
+              <div className="bg-white rounded-2xl p-8 shadow-lg border-2 border-blue-100 w-80">
+                <div className="flex flex-col items-center text-center mb-6">
+                  <img 
+                    src={testimonials.find(t => t.featured)?.avatar} 
+                    alt="Featured testimonial" 
+                    className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg mb-4"
+                  />
+                  <h4 className="font-bold text-gray-900 text-lg">
+                    {testimonials.find(t => t.featured)?.name}
+                  </h4>
+                  <p className="text-sm text-gray-600 mb-2">
+                    {testimonials.find(t => t.featured)?.role}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {testimonials.find(t => t.featured)?.company}
+                  </p>
+                </div>
+                <div className="flex justify-center mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <span key={i} className="text-yellow-400 text-xl">★</span>
+                  ))}
+                </div>
+                <p className="text-gray-700 leading-relaxed text-center">
+                  {testimonials.find(t => t.featured)?.text}
+                </p>
+              </div>
+            </div>
+
+            {/* Scattered testimonials around the featured one */}
+            {testimonials.filter(t => !t.featured).map((testimonial, index) => {
+              const positions = [
+                "top-4 left-8",      // top-left
+                "top-10 right-8",    // top-right  
+                "top-72 left-4",     // mid-left
+                "top-96 right-2",   // bottom-right
+                "bottom-32 left-12", // bottom-left
+                "bottom-28 right-4", // bottom-right
+              ];
+              
+              return (
+                <div 
+                  key={testimonial.id} 
+                  className={`absolute ${positions[index % positions.length]} ${getRandomCardClass(index)} transform hover:scale-105 transition-transform duration-200`}
+            
+                >
+                  <div className="bg-white rounded-xl p-6 shadow-md border hover:shadow-lg transition-shadow">
+                    <div className="flex items-start gap-3 mb-4">
+                      <img 
+                        src={testimonial.avatar} 
+                        alt={testimonial.name}
+                        className="w-12 h-12 rounded-full object-cover border-2 border-gray-100 flex-shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <h4 className="font-semibold text-gray-900 text-sm truncate">
+                          {testimonial.name}
+                        </h4>
+                        <p className="text-xs text-gray-600 truncate">
+                          {testimonial.role}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate">
+                          {testimonial.company}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* Rating stars */}
+                    <div className="flex mb-3">
+                      {[...Array(testimonial.rating)].map((_, i) => (
+                        <span key={i} className="text-yellow-400 text-sm">★</span>
+                      ))}
+                    </div>
+                    
+                    <p className="text-gray-700 text-sm leading-relaxed">
+                      {testimonial.text.length > 120 ? 
+                        testimonial.text.substring(0, 120) + "..." : 
+                        testimonial.text
+                      }
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+     
+          
+        </div>
+      </div>
+    </section>
       {/* Process Automation Section */}
       <section id="features" className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
