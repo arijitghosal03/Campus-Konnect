@@ -7,6 +7,7 @@ import StudentProfile from './models/studentProfileSchema';
 import Company from './models/companySchema';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
 
 dotenv.config();
 
@@ -18,7 +19,11 @@ const MONGO_URI = process.env.MONGODB_URI as string;
 
 // Middleware
 app.use(express.json());
-app.use(cors());
+app.use(cookieParser());
+app.use(cors({
+  origin: process.env.FRONTEND_URL,
+  credentials: true,
+}));
 
 // Connect to MongoDB
 async function connectDB() {
@@ -40,32 +45,6 @@ interface IUser extends Document {
   createdAt: Date;
 }
 
-
-
-
-// Initialize default users
-async function initializeDefaultUsers() {
-  try {
-    const defaultUsers = [
-      { username: 'sayantan', password: 'sayan123', role: 'student', email: 'sayantan@student.gcelt.ac.in' },
-      { username: 'gcelt', password: 'gceltadmin', role: 'college', email: 'admin@gcelt.ac.in' },
-      { username: 'tcs', password: 'tcs123', role: 'company', email: 'hr@tcs.com' }
-    ];
-
-    for (let userData of defaultUsers) {
-      const existingUser = await User.findOne({ username: userData.username });
-      if (!existingUser) {
-        const hashedPassword = await bcrypt.hash(userData.password, 10);
-        const user = new User({ ...userData, password: hashedPassword });
-        await user.save();
-        console.log(`Default ${userData.role} user created: ${userData.username}`);
-      }
-    }
-  } catch (error: any) {
-    console.log('Error initializing default users:', error);
-  }
-}
-
 // Custom Request interface
 interface CustomRequest extends Request {
   user?: IUser & Document;
@@ -75,8 +54,7 @@ type CustomRequestHandler = (req: CustomRequest, res: Response, next: NextFuncti
 
 // Authentication middleware
 const authenticate: CustomRequestHandler = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+  const token = req.cookies.token;
   
   if (!token) {
     res.status(401).json({ message: 'No authorization token provided' });
@@ -153,9 +131,15 @@ app.post('/auth/login', (async (req: Request, res: Response) => {
       { expiresIn: '24h' }
     );
 
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: 24 * 60 * 60 * 1000
+    });
+
     res.json({
       message: 'Login successful',
-      token,
       user: {
         id: user._id,
         username: user.username,
@@ -171,7 +155,7 @@ app.post('/auth/login', (async (req: Request, res: Response) => {
 
 app.post('/auth/register', (async (req: Request, res: Response) => {
   try {
-    const { username, password, role, email, secret } = req.body;
+    const { username, password, role, email, rollNo, staffCode, companyCode } = req.body;
 
     if (!username || !password || !role || !email) {
       res.status(400).json({ message: 'All fields are required' });
@@ -183,21 +167,66 @@ app.post('/auth/register', (async (req: Request, res: Response) => {
       return;
     }
 
-    if(role !== "student") {
-      if (secret !== process.env.SECRET_KEY) {
-        res.status(400).json({ message: 'Invalid secret' });
-        return;
-      }
-    }
-
     const existingUser = await User.findOne({ $or: [{ username }, { email }] });
     if (existingUser) {
       res.status(409).json({ message: 'Username or email already exists' });
       return;
     }
 
+    if(role === "student") {
+      if (!rollNo) {
+        res.status(400).json({ message: 'Roll number is required' });
+        return;
+      }
+    }
+    if(role === "college") {
+      if (!staffCode) {
+        res.status(400).json({ message: 'Staff code is required' });
+        return;
+      }
+      if (staffCode !== process.env.STAFF_CODE) {
+        res.status(400).json({ message: 'Invalid Staff code' });
+        return;
+      }
+    }
+    if(role === "company") {
+      if (!companyCode) {
+        res.status(400).json({ message: 'Company code is required' });
+        return;
+      }
+      if (companyCode !== process.env.COMPANY_CODE) {
+        res.status(400).json({ message: 'Invalid Company code' });
+        return;
+      }
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ username, password: hashedPassword, role, email });
+    const newUserDetails: {
+      username: string;
+      password: string;
+      role: string;
+      email: string;
+      rollNo?: string;
+      staffCode?: string;
+      companyCode?: string;
+    } = {
+      username,
+      password: hashedPassword,
+      role,
+      email,
+    };
+
+    if (role === 'student') {
+      newUserDetails.rollNo = rollNo;
+    }
+    if (role === 'college') {
+      newUserDetails.staffCode = staffCode;
+    }
+    if (role === 'company') {
+      newUserDetails.companyCode = companyCode;
+    }
+    
+    const user = new User(newUserDetails);
     await user.save();
 
     const token = jwt.sign(
@@ -206,9 +235,15 @@ app.post('/auth/register', (async (req: Request, res: Response) => {
       { expiresIn: '24h' }
     );
 
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: 24 * 60 * 60 * 1000
+    });
+
     res.status(201).json({
       message: 'User registered successfully',
-      token,
       user: {
         id: user._id,
         username: user.username,
@@ -471,7 +506,6 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 async function startServer() {
   try {
     await connectDB();
-    await initializeDefaultUsers();
     
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

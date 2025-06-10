@@ -532,42 +532,41 @@ const Home: React.FC = () => {
                  <LoginForm
                 title={modalTitle}
                 onCancel={closeModal}
-                onSubmit={(data) => {
-                  console.log("Submitted data:", data);
-                  switch (modalTitle){
-                    case "Student Portal Login":{
-                      console.log(data.username)
-                      if (username.student===data.username && password.student===data.password){
-                        localStorage.setItem("student","1")
-                        router.push("/student")
-                      } else{
-                        alert("wrong credentials given")
+                onSubmit={async (data) => {
+                  try {
+                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+                    const response = await fetch(`${apiUrl}/auth/login`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(data),
+                      credentials: 'include'
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                      const user = result.user;
+                      switch (user.role) {
+                        case 'student':
+                          router.push('/student');
+                          break;
+                        case 'college':
+                          router.push('/college');
+                          break;
+                        case 'company':
+                          router.push('/company/dashboard');
+                          break;
+                        default:
+                          router.push('/');
+                          break;
                       }
-                      break;
+                      closeModal();
+                    } else {
+                      alert(result.message || 'Login failed');
                     }
-                    case "College Admin Login":{
-                      if (username.college===data.username && password.college===data.password){
-                        localStorage.setItem("college","1")
-                        router.push("/college")
-                      } else{
-                        alert("wrong credentials given")
-                      }
-                      break;
-                    }
-                    case "Company Access Login":{
-                      if (username.company===data.username && password.company===data.password){
-                        localStorage.setItem("company","1")
-                        router.push("/company/dashboard")
-                      } else{
-                        alert("wrong credentials given")
-                      }
-                      break;
-                    }
-                    default:
-                      console.log("No such case exists!");
-                      break;
+                  } catch (error) {
+                    alert('An error occurred during login.');
                   }
-                  closeModal();
                 }}
                 onForgotPassword={() => alert("Forgot password clicked!")}
               />

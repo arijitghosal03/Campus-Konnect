@@ -3,7 +3,9 @@ import { User, Lock, Mail, Eye, EyeOff, Shield, Building, GraduationCap, Check, 
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+
 const SignUpPage = () => {
+  const router = useRouter();
   const [role, setRole] = useState("student");
   const [formData, setFormData] = useState({
     username: "",
@@ -177,32 +179,34 @@ const SignUpPage = () => {
         ...(role === "company" && { companyCode: formData.companyCode })
       };
 
-      const response = await fetch("/api/auth/register", {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+
+      const response = await fetch(`${apiUrl}/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(userData),
+        credentials: 'include'
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        alert("Registration successful!");
-        // Reset form
-        setFormData({
-          username: "",
-          email: "",
-          password: "",
-          confirmPassword: "",
-          rollNo: "",
-          staffCode: "",
-          companyCode: ""
-        });
-        setOtp("");
-        setEmailVerified(false);
-        setOtpSent(false);
-        setRole("student");
+        switch (data.user.role) {
+          case 'student':
+            router.push('/student/interface');
+            break;
+          case 'college':
+            router.push('/college');
+            break;
+          case 'company':
+            router.push('/company/dashboard');
+            break;
+          default:
+            router.push('/');
+            break;
+        }
       } else {
         setError(data.message || "Registration failed");
       }
