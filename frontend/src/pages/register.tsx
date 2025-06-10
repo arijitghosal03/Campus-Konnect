@@ -195,13 +195,13 @@ const SignUpPage = () => {
       if (response.ok) {
         switch (data.user.role) {
           case 'student':
-            router.push('/student/interface');
+            router.push('/student');
             break;
           case 'college':
             router.push('/college');
             break;
           case 'company':
-            router.push('/company/dashboard');
+            router.push('/company');
             break;
           default:
             router.push('/');
