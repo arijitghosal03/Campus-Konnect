@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { useRouter } from "next/router";
 interface LoginFormProps {
   title: string;
   onCancel: () => void;
@@ -288,6 +289,7 @@ const Home: React.FC = () => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const router = useRouter();
 
   const username = {student:"sayantan", college:"gcelt", company:"tcs"}
   const password = {student:"sayan123", college:"gceltadmin", company:"tcs123"}
@@ -527,34 +529,37 @@ const Home: React.FC = () => {
                 ✕
               </motion.button>
 
-              <LoginForm
+                 <LoginForm
                 title={modalTitle}
                 onCancel={closeModal}
                 onSubmit={(data) => {
                   console.log("Submitted data:", data);
                   switch (modalTitle){
                     case "Student Portal Login":{
-                      if (username.student === data.username && password.student === data.password){
-                        // In a real app, you'd use proper routing
-                        alert("Login successful! Redirecting to student portal...");
+                      console.log(data.username)
+                      if (username.student===data.username && password.student===data.password){
+                        localStorage.setItem("student","1")
+                        router.push("/student")
                       } else{
-                        alert("Invalid credentials. Please try again.");
+                        alert("wrong credentials given")
                       }
                       break;
                     }
                     case "College Admin Login":{
-                      if (username.college === data.username && password.college === data.password){
-                        alert("Login successful! Redirecting to admin panel...");
+                      if (username.college===data.username && password.college===data.password){
+                        localStorage.setItem("college","1")
+                        router.push("/college")
                       } else{
-                        alert("Invalid credentials. Please try again.");
+                        alert("wrong credentials given")
                       }
                       break;
                     }
                     case "Company Access Login":{
-                      if (username.company === data.username && password.company === data.password){
-                        alert("Login successful! Redirecting to company dashboard...");
+                      if (username.company===data.username && password.company===data.password){
+                        localStorage.setItem("company","1")
+                        router.push("/company/dashboard")
                       } else{
-                        alert("Invalid credentials. Please try again.");
+                        alert("wrong credentials given")
                       }
                       break;
                     }
@@ -564,7 +569,7 @@ const Home: React.FC = () => {
                   }
                   closeModal();
                 }}
-                onForgotPassword={() => alert("Password reset link sent to your email!")}
+                onForgotPassword={() => alert("Forgot password clicked!")}
               />
             </div>
           </motion.div>
