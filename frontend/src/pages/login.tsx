@@ -354,6 +354,9 @@ const Home: React.FC = () => {
             </div>
 
             <div className="hidden md:flex items-center space-x-8">
+              <Link href="/register">
+                <div className="text-gray-700 hover:text-blue-600 font-medium cursor-pointer">Register</div>
+              </Link>
               <Link href="/about">
                 <div className="text-gray-700 hover:text-blue-600 font-medium cursor-pointer">Team</div>
               </Link>
