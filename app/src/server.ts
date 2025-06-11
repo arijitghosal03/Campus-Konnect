@@ -2,6 +2,8 @@ import express, { Request, Response, NextFunction, RequestHandler } from 'expres
 import mongoose, { Document, Schema } from 'mongoose';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import http from 'http';
+import { Server as SocketIOServer } from 'socket.io';
 import User from './models/userSchema';
 import StudentProfile from './models/studentProfileSchema';
 import Company from './models/companySchema';
@@ -12,18 +14,32 @@ import cookieParser from 'cookie-parser';
 dotenv.config();
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 3000;
 
 const JWT_SECRET = process.env.SECRET_KEY as string;
 const MONGO_URI = process.env.MONGODB_URI as string;
 
+// Configure CORS for both Express and Socket.IO
+const corsOptions = {
+  origin: [
+    process.env.FRONTEND_URL || "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:3002"
+  ],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+};
+
+// Configure Socket.IO with CORS
+const io = new SocketIOServer(server, {
+  cors: corsOptions
+});
+
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({
-  origin: process.env.FRONTEND_URL,
-  credentials: true,
-}));
+app.use(cors(corsOptions));
 
 // Connect to MongoDB
 async function connectDB() {
@@ -36,7 +52,7 @@ async function connectDB() {
   }
 }
 
-// User Schema
+// User Schema Interface
 interface IUser extends Document {
   username: string;
   password: string;
@@ -44,6 +60,88 @@ interface IUser extends Document {
   email: string;
   createdAt: Date;
 }
+
+// Interview Room Interfaces
+interface IInterviewUser {
+  name: string;
+  role: 'interviewer' | 'candidate';
+  socketId: string;
+  email?: string;
+}
+
+interface IMessage {
+  id: string;
+  text: string;
+  sender: string;
+  timestamp: Date;
+  type: 'text' | 'system';
+}
+
+// Interview Room Class
+class InterviewRoom {
+  public id: string;
+  public passkey: string;
+  public creator: IInterviewUser;
+  public participants: Map<string, IInterviewUser>;
+  public messages: IMessage[];
+  public code: string;
+  public notes: string;
+  public createdAt: Date;
+  public status: 'waiting' | 'active' | 'ended';
+  public duration: number;
+
+  constructor(id: string, passkey: string, creator: IInterviewUser) {
+    this.id = id;
+    this.passkey = passkey;
+    this.creator = creator;
+    this.participants = new Map();
+    this.messages = [];
+    this.code = '// Welcome to the coding interview!\n// Feel free to write your code here\n\nfunction solution() {\n  // Your code here\n}';
+    this.notes = '# Interview Notes\n\n## Candidate Information\n- Name: \n- Position: \n\n## Technical Questions\n1. \n\n## Notes\n';
+    this.createdAt = new Date();
+    this.status = 'waiting';
+    this.duration = 60; // 60 minutes default
+  }
+
+  addParticipant(user: IInterviewUser): void {
+    this.participants.set(user.socketId, user);
+    if (this.participants.size === 2) {
+      this.status = 'active';
+    }
+  }
+
+  removeParticipant(socketId: string): void {
+    this.participants.delete(socketId);
+    if (this.participants.size === 0) {
+      this.status = 'ended';
+    }
+  }
+
+  getOtherParticipant(socketId: string): IInterviewUser | null {
+    for (const [id, participant] of this.participants) {
+      if (id !== socketId) {
+        return participant;
+      }
+    }
+    return null;
+  }
+
+  addMessage(message: IMessage): void {
+    this.messages.push(message);
+  }
+
+  updateCode(code: string): void {
+    this.code = code;
+  }
+
+  updateNotes(notes: string): void {
+    this.notes = notes;
+  }
+}
+
+// In-memory storage for interview rooms
+const interviewRooms = new Map<string, InterviewRoom>();
+const interviewUsers = new Map<string, IInterviewUser & { roomId: string }>();
 
 // Custom Request interface
 interface CustomRequest extends Request {
@@ -93,6 +191,314 @@ const authorize = (roles: string[]): CustomRequestHandler => {
     next();
   };
 };
+
+// Socket.IO connection handling
+io.on('connection', (socket) => {
+  console.log(`User connected: ${socket.id}`);
+
+  // Join interview room
+  socket.on('join-room', (data: {
+    roomId: string;
+    passkey: string;
+    user: IInterviewUser;
+  }) => {
+    console.log('Join room request received:', data);
+    
+    if (!data || !data.roomId || !data.passkey || !data.user) {
+      console.error('Invalid join-room data:', data);
+      socket.emit('room-error', 'Missing required data');
+      return;
+    }
+
+    const { roomId, passkey, user } = data;
+    
+    if (!user.name || !user.role) {
+      console.error('Invalid user data:', user);
+      socket.emit('room-error', 'Invalid user information');
+      return;
+    }
+    
+    try {
+      let room = interviewRooms.get(roomId);
+      
+      if (!room) {
+        console.log(`Creating new room: ${roomId}`);
+        room = new InterviewRoom(roomId, passkey, user);
+        interviewRooms.set(roomId, room);
+      } else if (room.passkey !== passkey) {
+        console.error(`Invalid passkey for room ${roomId}`);
+        socket.emit('room-error', 'Invalid passkey');
+        return;
+      }
+      
+      if (room.participants.size >= 2) {
+        console.error(`Room ${roomId} is full`);
+        socket.emit('room-error', 'Room is full');
+        return;
+      }
+
+      const userWithSocket: IInterviewUser = { ...user, socketId: socket.id };
+      room.addParticipant(userWithSocket);
+      interviewUsers.set(socket.id, { ...userWithSocket, roomId });
+      
+      socket.join(roomId);
+      console.log(`User ${user.name} joined room ${roomId}`);
+      
+      const roomData = {
+        room: {
+          id: room.id,
+          passkey: room.passkey,
+          scheduledTime: room.createdAt,
+          duration: room.duration,
+          participants: Array.from(room.participants.values()),
+          status: room.status
+        },
+        user: userWithSocket
+      };
+      
+      socket.emit('room-joined', roomData);
+
+      const otherParticipant = room.getOtherParticipant(socket.id);
+      if (otherParticipant) {
+        console.log(`Notifying other participant: ${otherParticipant.name}`);
+        socket.to(otherParticipant.socketId).emit('user-joined', userWithSocket);
+      }
+      socket.emit('user-joined', otherParticipant);
+      
+      room.messages.forEach(message => {
+        socket.emit('new-message', message);
+      });
+      
+      socket.emit('code-updated', room.code);
+      socket.emit('notes-updated', room.notes);
+      
+    } catch (error: any) {
+      console.error('Error joining room:', error);
+      socket.emit('room-error', `Failed to join room: ${error.message}`);
+    }
+  });
+
+  // Leave interview room
+  socket.on('leave-room', () => {
+    console.log('Leave room request:', socket.id);
+    const user = interviewUsers.get(socket.id);
+    if (user && user.roomId) {
+      const room = interviewRooms.get(user.roomId);
+      if (room) {
+        room.removeParticipant(socket.id);
+        socket.to(user.roomId).emit('user-left', user);
+        socket.leave(user.roomId);
+        console.log(`User ${user.name} left room ${user.roomId}`);
+        
+        if (room.participants.size === 0) {
+          console.log(`Cleaning up empty room: ${user.roomId}`);
+          interviewRooms.delete(user.roomId);
+        }
+      }
+    }
+    interviewUsers.delete(socket.id);
+  });
+
+  // Handle chat messages
+  socket.on('send-message', (data: { message: IMessage; roomId: string }) => {
+    console.log('Message received:', data);
+    if (!data || !data.message || !data.roomId) {
+      console.error('Invalid message data:', data);
+      return;
+    }
+
+    const { message, roomId } = data;
+    const room = interviewRooms.get(roomId);
+    
+    if (room) {
+      room.addMessage(message);
+      io.to(roomId).emit('new-message', message);
+    } else {
+      console.error(`Room not found: ${roomId}`);
+    }
+  });
+
+  // Handle code editor updates
+  socket.on('code-update', (data: { code: string; roomId: string }) => {
+    console.log('Code update received:', data?.roomId);
+    if (!data || !data.roomId || typeof data.code !== 'string') {
+      console.error('Invalid code update data:', data);
+      return;
+    }
+
+    const { code, roomId } = data;
+    const room = interviewRooms.get(roomId);
+    
+    if (room) {
+      room.updateCode(code);
+      socket.to(roomId).emit('code-updated', code);
+    } else {
+      console.error(`Room not found for code update: ${roomId}`);
+    }
+  });
+
+  // Handle notes updates
+  socket.on('notes-update', (data: { notes: string; roomId: string }) => {
+    console.log('Notes update received:', data?.roomId);
+    if (!data || !data.roomId || typeof data.notes !== 'string') {
+      console.error('Invalid notes update data:', data);
+      return;
+    }
+
+    const { notes, roomId } = data;
+    const room = interviewRooms.get(roomId);
+    
+    if (room) {
+      room.updateNotes(notes);
+      socket.to(roomId).emit('notes-updated', notes);
+    } else {
+      console.error(`Room not found for notes update: ${roomId}`);
+    }
+  });
+
+  // Handle media toggles (audio/video)
+  socket.on('media-toggle', (data: { type: string; enabled: boolean; roomId: string }) => {
+    console.log('Media toggle received:', data);
+    if (!data || !data.roomId || !data.type) {
+      console.error('Invalid media toggle data:', data);
+      return;
+    }
+
+    const { type, enabled, roomId } = data;
+    socket.to(roomId).emit('media-toggle', { type, enabled, from: socket.id });
+  });
+
+  // WebRTC signaling for video/audio calls
+  socket.on('webrtc-offer', (data: { offer: RTCSessionDescriptionInit; to: string }) => {
+    console.log('WebRTC offer received');
+    if (!data || !data.offer || !data.to) {
+      console.error('Invalid WebRTC offer data:', data);
+      return;
+    }
+
+    const { offer, to } = data;
+    socket.to(to).emit('webrtc-offer', { offer, from: socket.id });
+  });
+
+  socket.on('webrtc-answer', (data: { answer: RTCSessionDescriptionInit; to: string }) => {
+    console.log('WebRTC answer received');
+    if (!data || !data.answer || !data.to) {
+      console.error('Invalid WebRTC answer data:', data);
+      return;
+    }
+
+    const { answer, to } = data;
+    socket.to(to).emit('webrtc-answer', { answer, from: socket.id });
+  });
+
+  socket.on('webrtc-ice-candidate', (data: { candidate: RTCIceCandidate; to: string }) => {
+    console.log('WebRTC ICE candidate received');
+    if (!data || !data.candidate || !data.to) {
+      console.error('Invalid WebRTC ICE candidate data:', data);
+      return;
+    }
+
+    const { candidate, to } = data;
+    socket.to(to).emit('webrtc-ice-candidate', { candidate, from: socket.id });
+  });
+
+  // Handle disconnection
+  socket.on('disconnect', (reason) => {
+    console.log(`User disconnected: ${socket.id}, Reason: ${reason}`);
+    
+    const user = interviewUsers.get(socket.id);
+    if (user && user.roomId) {
+      const room = interviewRooms.get(user.roomId);
+      if (room) {
+        room.removeParticipant(socket.id);
+        socket.to(user.roomId).emit('user-left', user);
+        console.log(`User ${user.name} left room ${user.roomId} due to disconnect`);
+        
+        if (room.participants.size === 0) {
+          console.log(`Cleaning up empty room after disconnect: ${user.roomId}`);
+          interviewRooms.delete(user.roomId);
+        }
+      }
+    }
+    interviewUsers.delete(socket.id);
+  });
+
+  // Socket error handling
+  socket.on('error', (error) => {
+    console.error('Socket error:', error);
+  });
+
+  socket.on('connect_error', (error) => {
+    console.error('Socket connection error:', error);
+  });
+});
+
+// Health check
+app.get('/health', (req: Request, res: Response) => {
+  res.json({ 
+    status: 'OK', 
+    message: 'Campus Konnect Backend is running',
+    timestamp: new Date().toISOString(),
+    interviewRooms: interviewRooms.size,
+    connectedUsers: interviewUsers.size
+  });
+});
+
+// Interview Room API endpoints
+app.get('/api/interview/rooms/:roomId', (req: Request, res: Response) => {
+  const room = interviewRooms.get(req.params.roomId);
+  if (room) {
+    res.json({
+      id: room.id,
+      status: room.status,
+      participants: room.participants.size,
+      createdAt: room.createdAt
+    });
+  } else {
+    res.status(404).json({ error: 'Interview room not found' });
+  }
+});
+
+app.post('/api/interview/rooms', authenticate, (req: CustomRequest, res: Response) => {
+  try {
+    const { roomId, passkey, duration = 60 } = req.body;
+    
+    if (!roomId || !passkey) {
+      res.status(400).json({ error: 'Room ID and passkey are required' });
+      return;
+    }
+
+    if (interviewRooms.has(roomId)) {
+      res.status(409).json({ error: 'Room already exists' });
+      return;
+    }
+
+    const creator: IInterviewUser = {
+      name: req.user?.username || 'Unknown',
+      role: req.user?.role === 'company' ? 'interviewer' : 'candidate',
+      socketId: '', // Will be set when user joins
+      email: req.user?.email
+    };
+
+    const room = new InterviewRoom(roomId, passkey, creator);
+    room.duration = duration;
+    interviewRooms.set(roomId, room);
+
+    res.status(201).json({
+      message: 'Interview room created successfully',
+      room: {
+        id: room.id,
+        passkey: room.passkey,
+        duration: room.duration,
+        createdAt: room.createdAt,
+        status: room.status
+      }
+    });
+  } catch (error: any) {
+    console.error('Error creating interview room:', error);
+    res.status(500).json({ error: 'Failed to create interview room' });
+  }
+});
 
 // Health check
 app.get('/health', (req: Request, res: Response) => {
