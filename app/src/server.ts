@@ -913,7 +913,7 @@ async function startServer() {
   try {
     await connectDB();
     
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
       console.log(`Health check: http://localhost:${PORT}/health`);
       console.log('Default users created successfully');
