@@ -125,7 +125,7 @@ const InterviewRoom: React.FC = () => {
     }
 
     // Replace with your backend URL
-    socketRef.current = io('http://localhost:3001', {
+    socketRef.current = io(process.env.NEXT_PUBLIC_API_URL, {
       transports: ['websocket'],
       autoConnect: true,
       reconnection: true,
