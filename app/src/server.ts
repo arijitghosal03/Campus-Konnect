@@ -405,7 +405,7 @@ app.get('/college/students', authenticate, authorize(['college']), (async (req: 
 }));
 
 // COMPANY ROUTES
-app.get('/company/dashboard', authenticate, authorize(['company']), (async (req: CustomRequest, res: Response) => {
+app.get('/company', authenticate, authorize(['company']), (async (req: CustomRequest, res: Response) => {
   try {
     const company = await Company.findOne({ userId: req.user?._id });
     if (!company) {
