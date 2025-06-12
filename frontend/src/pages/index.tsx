@@ -160,11 +160,23 @@ const ProfessionalLandingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">S</span>
+              <div
+                className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md m-3 cursor-pointer"
+                onClick={() => window.location.href = '/'}
+              >
+                <img
+                  src="/logo.svg"
+                  alt="Campus Konnect Logo"
+                  className="w-16 h-16 object-contain"
+                />
               </div>
-              <span className="ml-2 text-xl font-bold text-gray-900">SARSS</span>
+
+              <span className="text-2xl font-semibold text-gray-800 tracking-wide">
+                <span className="font-bold bg-gradient-to-r from-teal-400 to-blue-600 bg-clip-text text-transparent">Campus</span>{' '}
+                <span className="font-bold text-gray-900">Konnect</span>
+              </span>
             </div>
+
 
             <div className="hidden md:flex items-center space-x-8">
                <Link href="/register">
@@ -222,14 +234,13 @@ const ProfessionalLandingPage = () => {
             {/* Left Content */}
             <div className="text-left">
               <h1 className="text-3xl font-bold mb-8 leading-tight">
-                <span className="text-gray-900">Accelerate AI Adoption At</span><br />
+                <span className="text-gray-900">Accelerate Smart Hirings At</span><br />
                 <span className="text-blue-600">Your Campus</span>
                 <span className="text-gray-900"> & </span>
-                <span className="text-blue-600">Business</span>
+                <span className="text-blue-600">Company</span>
               </h1>
               <p className="text-l text-gray-600 mb-10 max-w-2xl leading-relaxed">
-                Fast-track AI use across your institution with our comprehensive
-                platform that connects students, faculty, and administration.
+                We offer integrated platform to colleges, companies and students to showcase their achievements. Our AI-powered tools streamline processes, enhance learning experiences, and drive success across the educational ecosystem.
               </p>
               <div className="flex gap-4 mb-16">
                 
@@ -244,16 +255,21 @@ const ProfessionalLandingPage = () => {
               </div>
 
               {/* Partner Logos */}
-              <div>
-                <p className="text-sm text-gray-500 mb-6">Trusted by leading institutions worldwide</p>
-                <div className="flex items-center gap-6 opacity-60">
-                  {partnerLogos.slice(0, 4).map((logo, index) => (
-                    <div key={index} className="h-10 px-4 bg-white rounded-lg shadow-sm flex items-center border">
-                      <span className="text-gray-600 font-medium text-sm">{logo}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+         <div className="flex items-center gap-6 opacity-80">
+  {['tcs.png', 'ibm.png', 'Wipro.png', 'cognizant.png'].map((logo, index) => (
+    <div
+      key={index}
+      className="h-12 w-28 bg-white rounded-lg shadow-sm flex items-center justify-center border border-gray-200 hover:shadow-md transition-shadow"
+    >
+      <img
+        src={`/${logo}`}
+        alt={logo.split('.')[0]}
+        className="h-10 object-contain"
+      />
+    </div>
+  ))}
+</div>
+
             </div>
 
             {/* Right Visual */}

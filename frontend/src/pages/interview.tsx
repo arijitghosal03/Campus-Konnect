@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Link from 'next/link';
 import { 
   Camera, 
   CameraOff, 
@@ -48,15 +49,93 @@ interface InterviewSession {
 
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
 type ActiveTab = 'video' | 'chat' | 'code' | 'notes';
+const Navbar = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-// JoinModal Component - Moved outside to prevent re-renders
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    // In real app: clear localStorage and redirect
+    console.log('Logged out');
+  };
+
+  return (
+    <nav className="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+         <div className="flex items-center">
+              <div
+                className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md m-3 cursor-pointer"
+                onClick={() => window.location.href = '/'}
+              >
+    <img
+      src="/logo.svg"
+      alt="Campus Konnect Logo"
+      className="w-16 h-16 object-contain"
+    />
+  </div>
+
+  {/* Title styling */}
+  <span className="text-2xl font-semibold text-gray-800 tracking-wide">
+    <span className="font-bold bg-gradient-to-r from-teal-400 to-blue-600 bg-clip-text text-transparent">Campus</span>{' '}
+    <span className="font-bold text-gray-900">Konnect</span>
+  </span>
+            </div>
+
+          {/* Navigation Links */}
+          <div className="hidden md:flex items-center space-x-8">
+            <Link href="/company">
+              <div className="text-gray-700 hover:text-blue-600 font-medium cursor-pointer transition-colors">
+                Home
+              </div>
+            </Link>
+            <Link href="/company/test">
+              <div className="text-gray-700 hover:text-blue-600 font-medium cursor-pointer transition-colors">
+                Dashboard
+              </div>
+            </Link>
+          
+            
+            {/* Conditional Login/Logout */}
+            {!isLoggedIn ? (
+              <Link href="/login">
+                <div className="text-gray-700 hover:text-blue-600 font-medium cursor-pointer transition-colors">
+                  Login
+                </div>
+              </Link>
+            ) : (
+              <button
+                onClick={handleLogout}
+                className="text-gray-700 hover:text-blue-600 font-medium cursor-pointer transition-colors bg-transparent border-none"
+              >
+                Logout
+              </button>
+            )}
+          </div>
+
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            <button className="text-gray-700 hover:text-blue-600 p-2">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+};
+
+// JoinModal Component - Fixed and Complete
 const JoinModal = ({ 
   joinForm, 
   setJoinForm, 
   error, 
   connectionStatus, 
   joinRoom, 
-  createRoom 
+  createRoom,
+  onClose
 }: {
   joinForm: {
     name: string;
@@ -74,93 +153,163 @@ const JoinModal = ({
   connectionStatus: string;
   joinRoom: () => void;
   createRoom: () => void;
-}) => (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
-      <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Join Interview Room</h2>
-      
-      {error && (
-        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-          {error}
-        </div>
-      )}
+  onClose?: () => void;
+}) => {
+  return (
+     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="min-h-screen w-full">
+        <Navbar />
+        <div className="bg-white rounded-lg max-w-md w-full mx-auto mt-8 relative shadow-2xl overflow-hidden">
 
-      {connectionStatus === 'connecting' && (
-        <div className="mb-4 p-3 bg-blue-100 border border-blue-400 text-blue-700 rounded">
-          Connecting to room...
-        </div>
-      )}
-      
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-2 text-gray-700">Your Name</label>
-          <input
-            type="text"
-            value={joinForm.name}
-            onChange={(e) => setJoinForm(prev => ({ ...prev, name: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
-            placeholder="Enter your name"
-            disabled={connectionStatus === 'connecting'}
-          />
-        </div>
+        {/* Modal Content */}
+        <div className="p-8 relative">
+          {/* Close button */}
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
 
-        <div>
-          <label className="block text-sm font-medium mb-2 text-gray-700">Role</label>
-          <select
-            value={joinForm.role}
-            onChange={(e) => setJoinForm(prev => ({ ...prev, role: e.target.value as 'interviewer' | 'candidate' }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
-            disabled={connectionStatus === 'connecting'}
-          >
-            <option value="candidate">Candidate</option>
-            <option value="interviewer">Interviewer</option>
-          </select>
-        </div>
+        <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Join Interview Room</h2>
+        
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md">
+            <div className="flex items-center">
+              <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              {error}
+            </div>
+          </div>
+        )}
 
-        <div>
-          <label className="block text-sm font-medium mb-2 text-gray-700">Room ID</label>
-          <div className="flex gap-2">
+        {/* Connecting Status */}
+        {connectionStatus === 'connecting' && (
+          <div className="mb-4 p-3 bg-blue-100 border border-blue-400 text-blue-700 rounded-md">
+            <div className="flex items-center">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-700 mr-2"></div>
+              Connecting to room...
+            </div>
+          </div>
+        )}
+        
+        <div className="space-y-4">
+          {/* Name Input */}
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-700">
+              Your Name <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
-              value={joinForm.roomId}
-              onChange={(e) => setJoinForm(prev => ({ ...prev, roomId: e.target.value.toUpperCase() }))}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
-              placeholder="Enter room ID"
+              value={joinForm.name}
+              onChange={(e) => setJoinForm(prev => ({ ...prev, name: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 transition-all"
+              placeholder="Enter your full name"
               disabled={connectionStatus === 'connecting'}
+              maxLength={50}
             />
-            <button
-              onClick={createRoom}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors disabled:opacity-50"
+          </div>
+
+          {/* Role Selection */}
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-700">
+              Your Role <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={joinForm.role}
+              onChange={(e) => setJoinForm(prev => ({ ...prev, role: e.target.value as 'interviewer' | 'candidate' }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 transition-all"
               disabled={connectionStatus === 'connecting'}
             >
-              Generate
-            </button>
+              <option value="candidate">Candidate (Interviewee)</option>
+              <option value="interviewer">Interviewer</option>
+            </select>
+          </div>
+
+          {/* Room ID Input */}
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-700">
+              Room ID <span className="text-red-500">*</span>
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={joinForm.roomId}
+                onChange={(e) => setJoinForm(prev => ({ ...prev, roomId: e.target.value.toUpperCase() }))}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 font-mono transition-all"
+                placeholder="Enter 6-digit room ID"
+                disabled={connectionStatus === 'connecting'}
+                maxLength={6}
+              />
+              <button
+                onClick={createRoom}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                disabled={connectionStatus === 'connecting'}
+                title="Generate a new room ID"
+              >
+                Generate
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">6-character alphanumeric code</p>
+          </div>
+
+          {/* Passkey Input */}
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-700">
+              Passkey <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={joinForm.passkey}
+              onChange={(e) => setJoinForm(prev => ({ ...prev, passkey: e.target.value.toUpperCase() }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 font-mono transition-all"
+              placeholder="Enter 4-digit passkey"
+              disabled={connectionStatus === 'connecting'}
+              maxLength={4}
+            />
+            <p className="text-xs text-gray-500 mt-1">4-character security code</p>
+          </div>
+
+          {/* Join Button */}
+          <button
+            onClick={joinRoom}
+            disabled={
+              !joinForm.name?.trim() || 
+              !joinForm.roomId?.trim() || 
+              !joinForm.passkey?.trim() || 
+              connectionStatus === 'connecting'
+            }
+            className="w-full py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
+          >
+            {connectionStatus === 'connecting' ? (
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                Joining Room...
+              </div>
+            ) : (
+              'Join Interview Room'
+            )}
+          </button>
+        </div>
+
+          {/* Help Text */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600">
+              Need help? Contact your interviewer for room details.
+            </p>
           </div>
         </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2 text-gray-700">Passkey</label>
-          <input
-            type="text"
-            value={joinForm.passkey}
-            onChange={(e) => setJoinForm(prev => ({ ...prev, passkey: e.target.value.toUpperCase() }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
-            placeholder="Enter passkey"
-            disabled={connectionStatus === 'connecting'}
-          />
         </div>
-
-        <button
-          onClick={joinRoom}
-          disabled={!joinForm.name || !joinForm.roomId || !joinForm.passkey || connectionStatus === 'connecting'}
-          className="w-full py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-        >
-          {connectionStatus === 'connecting' ? 'Joining...' : 'Join Room'}
-        </button>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 
 // Main Interview Room Component

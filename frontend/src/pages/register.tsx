@@ -237,10 +237,22 @@ const SignUpPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">S</span>
-              </div>
-              <span className="ml-2 text-xl font-bold text-gray-900">Campus Konnect</span>
+              <div
+                className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md m-3 cursor-pointer"
+                onClick={() => window.location.href = '/'}
+              >
+    <img
+      src="/logo.svg"
+      alt="Campus Konnect Logo"
+      className="w-16 h-16 object-contain"
+    />
+  </div>
+
+  {/* Title styling */}
+  <span className="text-2xl font-semibold text-gray-800 tracking-wide">
+    <span className="font-bold bg-gradient-to-r from-teal-400 to-blue-600 bg-clip-text text-transparent">Campus</span>{' '}
+    <span className="font-bold text-gray-900">Konnect</span>
+  </span>
             </div>
 
             <div className="hidden md:flex items-center space-x-8">

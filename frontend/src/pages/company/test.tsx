@@ -304,19 +304,21 @@ export default function AdminDashboard() {
                   <Monitor className="h-5 w-5 text-white" />
                 </div>
                 <span className="font-bold text-xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  ExamFlow
+                  Campus Konnect
                 </span>
               </Link>
               <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-                AI-Powered Admin Portal
+               Company Portal
               </Badge>
             </div>
-            
+              
             <div className="flex items-center space-x-3">
+               <Link href="/interview">
               <Button variant="outline" size="sm" className="hover:bg-blue-50">
                 <Settings className="h-4 w-4 mr-2" />
-                Settings
+                Interview Room
               </Button>
+              </Link>
               <Link href="/company/createtest">
                 <Button size="sm" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
                   <Plus className="h-4 w-4 mr-2" />
