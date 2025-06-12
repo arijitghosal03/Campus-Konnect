@@ -1,26 +1,33 @@
-'use client';
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Camera, 
+  CameraOff, 
   Mic, 
   MicOff, 
-  CameraOff, 
-  Phone, 
+  PhoneOff, 
+  Monitor, 
   MessageSquare, 
-  Code, 
-  FileText, 
   Send, 
+  Users, 
   Clock, 
-  Users,
-  Settings,
-  Monitor,
-  Copy,
-  PhoneOff
+  Settings, 
+  Copy, 
+  Code, 
+  FileText 
 } from 'lucide-react';
-import { io, Socket } from 'socket.io-client';
+import io, { Socket } from 'socket.io-client';
 
-// Types
+// Types and Interfaces
+interface User {
+  id: string;
+  name: string;
+  role: 'interviewer' | 'candidate';
+  isVideoOn: boolean;
+  isAudioOn: boolean;
+  socketId?: string;
+}
+
+
 interface Message {
   id: string;
   sender: string;
@@ -28,6 +35,7 @@ interface Message {
   content: string;
   timestamp: Date;
 }
+
 
 interface InterviewSession {
   id: string;
@@ -38,21 +46,122 @@ interface InterviewSession {
   status: 'waiting' | 'active' | 'ended';
 }
 
-interface User {
-  id: string;
-  name: string;
-  role: 'interviewer' | 'candidate';
-  isVideoOn: boolean;
-  isAudioOn: boolean;
-  socketId?: string;
-}
+type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
+type ActiveTab = 'video' | 'chat' | 'code' | 'notes';
 
-interface RTCMessage {
-  type: 'offer' | 'answer' | 'ice-candidate';
-  data: any;
-  from: string;
-  to: string;
-}
+// JoinModal Component - Moved outside to prevent re-renders
+const JoinModal = ({ 
+  joinForm, 
+  setJoinForm, 
+  error, 
+  connectionStatus, 
+  joinRoom, 
+  createRoom 
+}: {
+  joinForm: {
+    name: string;
+    role: 'interviewer' | 'candidate';
+    roomId: string;
+    passkey: string;
+  };
+  setJoinForm: React.Dispatch<React.SetStateAction<{
+    name: string;
+    role: 'interviewer' | 'candidate';
+    roomId: string;
+    passkey: string;
+  }>>;
+  error: string;
+  connectionStatus: string;
+  joinRoom: () => void;
+  createRoom: () => void;
+}) => (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+      <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Join Interview Room</h2>
+      
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
+        </div>
+      )}
+
+      {connectionStatus === 'connecting' && (
+        <div className="mb-4 p-3 bg-blue-100 border border-blue-400 text-blue-700 rounded">
+          Connecting to room...
+        </div>
+      )}
+      
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium mb-2 text-gray-700">Your Name</label>
+          <input
+            type="text"
+            value={joinForm.name}
+            onChange={(e) => setJoinForm(prev => ({ ...prev, name: e.target.value }))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
+            placeholder="Enter your name"
+            disabled={connectionStatus === 'connecting'}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2 text-gray-700">Role</label>
+          <select
+            value={joinForm.role}
+            onChange={(e) => setJoinForm(prev => ({ ...prev, role: e.target.value as 'interviewer' | 'candidate' }))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
+            disabled={connectionStatus === 'connecting'}
+          >
+            <option value="candidate">Candidate</option>
+            <option value="interviewer">Interviewer</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2 text-gray-700">Room ID</label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={joinForm.roomId}
+              onChange={(e) => setJoinForm(prev => ({ ...prev, roomId: e.target.value.toUpperCase() }))}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
+              placeholder="Enter room ID"
+              disabled={connectionStatus === 'connecting'}
+            />
+            <button
+              onClick={createRoom}
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors disabled:opacity-50"
+              disabled={connectionStatus === 'connecting'}
+            >
+              Generate
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2 text-gray-700">Passkey</label>
+          <input
+            type="text"
+            value={joinForm.passkey}
+            onChange={(e) => setJoinForm(prev => ({ ...prev, passkey: e.target.value.toUpperCase() }))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
+            placeholder="Enter passkey"
+            disabled={connectionStatus === 'connecting'}
+          />
+        </div>
+
+        <button
+          onClick={joinRoom}
+          disabled={!joinForm.name || !joinForm.roomId || !joinForm.passkey || connectionStatus === 'connecting'}
+          className="w-full py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+        >
+          {connectionStatus === 'connecting' ? 'Joining...' : 'Join Room'}
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
 
 // Main Interview Room Component
 const InterviewRoom: React.FC = () => {
@@ -176,10 +285,10 @@ socket.on('user-joined', (user: User) => {
   console.log('New user joined:', user);
   if (!isUnmountingRef.current) {
     setRemoteUser(user);
-    // Initiate call if we have local stream and no existing peer connection
-    // The first person to join after someone else should initiate
-    if (localStreamRef.current && !peerConnectionRef.current && user.socketId) {
-      console.log('Initiating call to new user');
+    // Only initiate call if we're the interviewer and have local stream
+    // AND if we don't already have a peer connection
+    if (currentUser.role === 'interviewer' && localStreamRef.current && !peerConnectionRef.current) {
+      console.log('Initiating call as interviewer');
       setTimeout(() => initiateCall(), 1000);
     }
   }
@@ -468,7 +577,13 @@ peerConnection.ontrack = (event) => {
       }
     }
   }, [session?.id]);
+const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  setJoinForm(prev => ({ ...prev, name: e.target.value }));
+}, []);
 
+const handleRoomIdChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  setJoinForm(prev => ({ ...prev, roomId: e.target.value.toUpperCase() }));
+}, []);
   // Chat functions
   const sendMessage = useCallback(() => {
     if (newMessage.trim() && socketRef.current && session) {
@@ -750,97 +865,19 @@ if (!hasPermission) {
   };
 
   // Join Modal Component
-  const JoinModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
-        <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Join Interview Room</h2>
-        
-        {error && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-            {error}
-          </div>
-        )}
 
-        {connectionStatus === 'connecting' && (
-          <div className="mb-4 p-3 bg-blue-100 border border-blue-400 text-blue-700 rounded">
-            Connecting to room...
-          </div>
-        )}
-        
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">Your Name</label>
-            <input
-              type="text"
-              value={joinForm.name}
-              onChange={(e) => setJoinForm(prev => ({ ...prev, name: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
-              placeholder="Enter your name"
-              disabled={connectionStatus === 'connecting'}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">Role</label>
-            <select
-              value={joinForm.role}
-              onChange={(e) => setJoinForm(prev => ({ ...prev, role: e.target.value as 'interviewer' | 'candidate' }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
-              disabled={connectionStatus === 'connecting'}
-            >
-              <option value="candidate">Candidate</option>
-              <option value="interviewer">Interviewer</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">Room ID</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={joinForm.roomId}
-                onChange={(e) => setJoinForm(prev => ({ ...prev, roomId: e.target.value.toUpperCase() }))}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
-                placeholder="Enter room ID"
-                disabled={connectionStatus === 'connecting'}
-              />
-              <button
-                onClick={createRoom}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors disabled:opacity-50"
-                disabled={connectionStatus === 'connecting'}
-              >
-                Generate
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">Passkey</label>
-            <input
-              type="text"
-              value={joinForm.passkey}
-              onChange={(e) => setJoinForm(prev => ({ ...prev, passkey: e.target.value.toUpperCase() }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
-              placeholder="Enter passkey"
-              disabled={connectionStatus === 'connecting'}
-            />
-          </div>
-
-          <button
-            onClick={joinRoom}
-            disabled={!joinForm.name || !joinForm.roomId || !joinForm.passkey || connectionStatus === 'connecting'}
-            className="w-full py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-          >
-            {connectionStatus === 'connecting' ? 'Joining...' : 'Join Room'}
-          </button>
-        </div>
-      </div>
-    </div>
+if (showJoinModal || !session || !isConnected) {
+  return (
+    <JoinModal
+      joinForm={joinForm}
+      setJoinForm={setJoinForm}
+      error={error}
+      connectionStatus={connectionStatus}
+      joinRoom={joinRoom}
+      createRoom={createRoom}
+    />
   );
-
-  if (showJoinModal) {
-    return <JoinModal />;
-  }
+}
 
   return (
     <div className="h-screen bg-gray-900 text-white flex flex-col">
