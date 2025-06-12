@@ -285,11 +285,15 @@ socket.on('user-joined', (user: User) => {
   console.log('New user joined:', user);
   if (!isUnmountingRef.current) {
     setRemoteUser(user);
-    // Only initiate call if we're the interviewer and have local stream
-    // AND if we don't already have a peer connection
-    if (currentUser.role === 'interviewer' && localStreamRef.current && !peerConnectionRef.current) {
+    
+    // Wait a bit for the user to be properly set, then initiate call if we're the interviewer
+    if (currentUser.role === 'interviewer' && localStreamRef.current) {
       console.log('Initiating call as interviewer');
-      setTimeout(() => initiateCall(), 1000);
+      setTimeout(() => {
+        if (localStreamRef.current && !peerConnectionRef.current) {
+          initiateCall();
+        }
+      }, 1500);
     }
   }
 });
@@ -341,7 +345,17 @@ socket.on('new-message', (message: Message) => {
         setNotes(newNotes);
       }
     });
-
+// Media toggle events
+socket.on('media-toggle', (data: { type: 'video' | 'audio', enabled: boolean, userId: string }) => {
+  console.log('Media toggle received:', data);
+  if (!isUnmountingRef.current && remoteUser) {
+    setRemoteUser(prev => prev ? {
+      ...prev,
+      isVideoOn: data.type === 'video' ? data.enabled : prev.isVideoOn,
+      isAudioOn: data.type === 'audio' ? data.enabled : prev.isAudioOn
+    } : null);
+  }
+});
     // WebRTC signaling
     socket.on('webrtc-offer', handleWebRTCOffer);
     socket.on('webrtc-answer', handleWebRTCAnswer);
@@ -423,85 +437,101 @@ const initializeMedia = useCallback(async () => {
         });
       }
     };
-peerConnection.ontrack = (event) => {
-  console.log('Received remote track', event.track.kind);
+    
+    peerConnection.ontrack = (event) => {
+  console.log('Received remote track:', event.track.kind);
   
-  if (!remoteStreamRef.current) {
-    remoteStreamRef.current = new MediaStream();
-  }
+  // Get the stream from the event
+  const [remoteStream] = event.streams;
   
-  // Add the track to our remote stream
-  remoteStreamRef.current.addTrack(event.track);
-  
-  if (remoteVideoRef.current && remoteVideoRef.current.srcObject !== remoteStreamRef.current) {
-    remoteVideoRef.current.srcObject = remoteStreamRef.current;
+  if (remoteStream && remoteVideoRef.current) {
+    console.log('Setting remote stream to video element');
+    remoteVideoRef.current.srcObject = remoteStream;
+    remoteStreamRef.current = remoteStream;
+    
+    // Force play the video
     remoteVideoRef.current.play().catch(error => {
       console.error('Error playing remote video:', error);
     });
   }
 };
-
     peerConnection.onconnectionstatechange = () => {
       console.log('Peer connection state:', peerConnection.connectionState);
     };
 
     return peerConnection;
   }, [remoteUser?.socketId]);
+const initiateCall = useCallback(async () => {
+  console.log('Initiating call...');
+  if (!localStreamRef.current || !socketRef.current || !remoteUser) {
+    console.log('Cannot initiate call - missing requirements');
+    return;
+  }
 
-  const initiateCall = useCallback(async () => {
-    console.log('Initiating call...');
-    if (!localStreamRef.current || !socketRef.current) {
-      console.log('Cannot initiate call - missing stream or socket');
-      return;
-    }
-
+  try {
     peerConnectionRef.current = createPeerConnection();
     
-    // Add local stream to peer connection
+    // Add local stream tracks to peer connection
     localStreamRef.current.getTracks().forEach(track => {
-      console.log('Adding track to peer connection:', track.kind);
-      peerConnectionRef.current?.addTrack(track, localStreamRef.current!);
+      console.log('Adding local track to peer connection:', track.kind);
+      if (peerConnectionRef.current && localStreamRef.current) {
+        peerConnectionRef.current.addTrack(track, localStreamRef.current);
+      }
     });
 
-    try {
-      const offer = await peerConnectionRef.current.createOffer();
-      await peerConnectionRef.current.setLocalDescription(offer);
-      
-      console.log('Sending WebRTC offer');
-      socketRef.current.emit('webrtc-offer', {
-        offer,
-        to: remoteUser?.socketId
-      });
-    } catch (error) {
-      console.error('Error creating offer:', error);
-    }
-  }, [createPeerConnection, remoteUser?.socketId]);
+    const offer = await peerConnectionRef.current.createOffer({
+      offerToReceiveAudio: true,
+      offerToReceiveVideo: true
+    });
+    
+    await peerConnectionRef.current.setLocalDescription(offer);
+    
+    console.log('Sending WebRTC offer to:', remoteUser.socketId);
+    socketRef.current.emit('webrtc-offer', {
+      offer,
+      to: remoteUser.socketId
+    });
+  } catch (error) {
+    console.error('Error creating offer:', error);
+  }
+}, [createPeerConnection, remoteUser]);
 
-  const handleWebRTCOffer = useCallback(async (data: { offer: RTCSessionDescriptionInit, from: string }) => {
-    console.log('Handling WebRTC offer');
-    if (!localStreamRef.current || !socketRef.current) return;
+ const handleWebRTCOffer = useCallback(async (data: { offer: RTCSessionDescriptionInit, from: string }) => {
+  console.log('Handling WebRTC offer from:', data.from);
+  if (!localStreamRef.current || !socketRef.current) {
+    console.log('Cannot handle offer - missing requirements');
+    return;
+  }
 
+  try {
     peerConnectionRef.current = createPeerConnection();
     
-    // Add local stream to peer connection
+    // Add local stream tracks to peer connection
     localStreamRef.current.getTracks().forEach(track => {
-      peerConnectionRef.current?.addTrack(track, localStreamRef.current!);
+      console.log('Adding local track to peer connection:', track.kind);
+      if (peerConnectionRef.current && localStreamRef.current) {
+        peerConnectionRef.current.addTrack(track, localStreamRef.current);
+      }
     });
 
-    try {
-      await peerConnectionRef.current.setRemoteDescription(data.offer);
-      const answer = await peerConnectionRef.current.createAnswer();
-      await peerConnectionRef.current.setLocalDescription(answer);
-      
-      console.log('Sending WebRTC answer');
-      socketRef.current.emit('webrtc-answer', {
-        answer,
-        to: data.from
-      });
-    } catch (error) {
-      console.error('Error handling offer:', error);
-    }
-  }, [createPeerConnection]);
+    await peerConnectionRef.current.setRemoteDescription(data.offer);
+    
+    const answer = await peerConnectionRef.current.createAnswer({
+      offerToReceiveAudio: true,
+      offerToReceiveVideo: true
+    });
+    
+    await peerConnectionRef.current.setLocalDescription(answer);
+    
+    console.log('Sending WebRTC answer to:', data.from);
+    socketRef.current.emit('webrtc-answer', {
+      answer,
+      to: data.from
+    });
+  } catch (error) {
+    console.error('Error handling offer:', error);
+  }
+}, [createPeerConnection]);
   
   const resetPeerConnection = useCallback(() => {
   if (peerConnectionRef.current) {
@@ -512,9 +542,33 @@ peerConnection.ontrack = (event) => {
     remoteStreamRef.current.getTracks().forEach(track => track.stop());
     remoteStreamRef.current = null;
   }
+  // Debug remote video
+useEffect(() => {
   if (remoteVideoRef.current) {
-    remoteVideoRef.current.srcObject = null;
+    const video = remoteVideoRef.current;
+    
+    const handleLoadedMetadata = () => {
+      console.log('Remote video metadata loaded:', {
+        videoWidth: video.videoWidth,
+        videoHeight: video.videoHeight,
+        duration: video.duration
+      });
+    };
+    
+    const handleCanPlay = () => {
+      console.log('Remote video can play');
+      video.play().catch(console.error);
+    };
+    
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
+    video.addEventListener('canplay', handleCanPlay);
+    
+    return () => {
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      video.removeEventListener('canplay', handleCanPlay);
+    };
   }
+}, [remoteUser]);
 }, []);
 
   const handleWebRTCAnswer = useCallback(async (data: { answer: RTCSessionDescriptionInit }) => {
@@ -856,6 +910,7 @@ if (!hasPermission) {
   };
 
   // Copy to clipboard
+  const [copied, setCopied] = useState(false);
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -898,20 +953,29 @@ if (showJoinModal || !session || !isConnected) {
             <span>{connectionStatus}</span>
           </div>
         </div>
-        
-        <div className="flex items-center gap-2">
+
+       <div className="flex items-center gap-2">
           <button
-            onClick={() => copyToClipboard(`Room: ${session?.id}, Passkey: ${session?.passkey}`)}
+            onClick={() => {
+              copyToClipboard(`Room: ${session?.id}, Passkey: ${session?.passkey}`);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1500);
+            }}
             className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm flex items-center gap-1"
           >
             <Copy className="w-3 h-3" />
+            {copied && (
+              <div className="ml-3 px-2 py-1 bg-green-600 text-white text-xs font-medium rounded-md shadow-lg animate-fade-in">
+                copied
+              </div>
+            )}
             Share Room
           </button>
           <button className="p-2 hover:bg-gray-700 rounded">
             <Settings className="w-5 h-5" />
           </button>
         </div>
-      </div>
+        </div>
 
       <div className="flex-1 flex overflow-hidden">
         {/* Main Content Area */}
@@ -980,19 +1044,27 @@ if (showJoinModal || !session || !isConnected) {
 <div className="relative bg-gray-800 rounded-lg overflow-hidden min-h-[300px]">
   {remoteUser ? (
     <>
-      <video
-        ref={remoteVideoRef}
-        autoPlay
-        playsInline
-        className="w-full h-full object-cover bg-gray-800"
-        style={{ minHeight: '300px' }}
-        onLoadedMetadata={() => {
-          console.log('Remote video metadata loaded');
-          if (remoteVideoRef.current) {
-            remoteVideoRef.current.play().catch(console.error);
-          }
-        }}
-      />
+     <video
+  ref={remoteVideoRef}
+  autoPlay
+  playsInline
+  controls={false}
+  muted={false}
+  className="w-full h-full object-cover bg-gray-800"
+  style={{ minHeight: '300px' }}
+  onLoadedMetadata={() => {
+    console.log('Remote video metadata loaded');
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.play().catch(console.error);
+    }
+  }}
+  onError={(e) => {
+    console.error('Remote video error:', e);
+  }}
+  onLoadStart={() => {
+    console.log('Remote video load start');
+  }}
+/>
       <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 px-3 py-1 rounded">
         <span className="text-sm">{remoteUser.name}</span>
       </div>
