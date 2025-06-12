@@ -172,7 +172,7 @@ const SignUpPage = () => {
       const userData = {
         username: formData.username,
         email: formData.email,
-        password: encryptedPassword,
+        password:formData.password,
         role: role,
         ...(role === "student" && { rollNo: formData.rollNo }),
         ...(role === "college" && { staffCode: formData.staffCode }),
