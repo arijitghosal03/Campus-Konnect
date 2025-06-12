@@ -130,7 +130,7 @@ const InterviewRoom: React.FC = () => {
       autoConnect: true,
       reconnection: true,
       reconnectionAttempts: 5,
-      timeout: 10000
+      timeout: 100000
     });
 
     const socket = socketRef.current;
@@ -176,10 +176,10 @@ socket.on('user-joined', (user: User) => {
   console.log('New user joined:', user);
   if (!isUnmountingRef.current) {
     setRemoteUser(user);
-    // Only initiate call if we're the interviewer and have local stream
-    // AND if we don't already have a peer connection
-    if (currentUser.role === 'interviewer' && localStreamRef.current && !peerConnectionRef.current) {
-      console.log('Initiating call as interviewer');
+    // Initiate call if we have local stream and no existing peer connection
+    // The first person to join after someone else should initiate
+    if (localStreamRef.current && !peerConnectionRef.current && user.socketId) {
+      console.log('Initiating call to new user');
       setTimeout(() => initiateCall(), 1000);
     }
   }
@@ -191,6 +191,7 @@ socket.on('user-joined', (user: User) => {
         if (peerConnectionRef.current) {
           peerConnectionRef.current.close();
           peerConnectionRef.current = null;
+           resetPeerConnection();
         }
       }
     });
@@ -204,16 +205,20 @@ socket.on('user-joined', (user: User) => {
     });
 
     // Chat events
-    socket.on('new-message', (message: Message) => {
-      console.log('New message received:', message);
-      if (!isUnmountingRef.current) {
-        setMessages(prev => [...prev, message]);
-        if (activeTab !== 'chat') {
-          setUnreadCount(prev => prev + 1);
-        }
-      }
-    });
-
+socket.on('new-message', (message: Message) => {
+  console.log('New message received:', message);
+  if (!isUnmountingRef.current) {
+    // Convert timestamp string back to Date object
+    const messageWithDate = {
+      ...message,
+      timestamp: new Date(message.timestamp)
+    };
+    setMessages(prev => [...prev, messageWithDate]);
+    if (activeTab !== 'chat') {
+      setUnreadCount(prev => prev + 1);
+    }
+  }
+});
     // Code editor events
     socket.on('code-updated', (newCode: string) => {
       if (!isUnmountingRef.current) {
@@ -309,14 +314,18 @@ const initializeMedia = useCallback(async () => {
         });
       }
     };
-
 peerConnection.ontrack = (event) => {
-  console.log('Received remote track');
-  const [remoteStream] = event.streams;
-  remoteStreamRef.current = remoteStream;
-  if (remoteVideoRef.current) {
-    remoteVideoRef.current.srcObject = remoteStream;
-    // Force remote video to play
+  console.log('Received remote track', event.track.kind);
+  
+  if (!remoteStreamRef.current) {
+    remoteStreamRef.current = new MediaStream();
+  }
+  
+  // Add the track to our remote stream
+  remoteStreamRef.current.addTrack(event.track);
+  
+  if (remoteVideoRef.current && remoteVideoRef.current.srcObject !== remoteStreamRef.current) {
+    remoteVideoRef.current.srcObject = remoteStreamRef.current;
     remoteVideoRef.current.play().catch(error => {
       console.error('Error playing remote video:', error);
     });
@@ -384,6 +393,20 @@ peerConnection.ontrack = (event) => {
       console.error('Error handling offer:', error);
     }
   }, [createPeerConnection]);
+  
+  const resetPeerConnection = useCallback(() => {
+  if (peerConnectionRef.current) {
+    peerConnectionRef.current.close();
+    peerConnectionRef.current = null;
+  }
+  if (remoteStreamRef.current) {
+    remoteStreamRef.current.getTracks().forEach(track => track.stop());
+    remoteStreamRef.current = null;
+  }
+  if (remoteVideoRef.current) {
+    remoteVideoRef.current.srcObject = null;
+  }
+}, []);
 
   const handleWebRTCAnswer = useCallback(async (data: { answer: RTCSessionDescriptionInit }) => {
     console.log('Handling WebRTC answer');
@@ -530,7 +553,7 @@ if (!hasPermission) {
         return new Promise<void>((resolve, reject) => {
           const timeout = setTimeout(() => {
             reject(new Error('Connection timeout'));
-          }, 10000);
+          }, 100000);
 
           if (socket.connected) {
             clearTimeout(timeout);
@@ -641,6 +664,7 @@ if (!hasPermission) {
       socketRef.current.disconnect();
       socketRef.current = null;
     }
+    
 
     // Reset state
     setSession(null);
