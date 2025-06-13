@@ -435,14 +435,14 @@ socket.on('user-joined', (user: User) => {
   if (!isUnmountingRef.current) {
     setRemoteUser(user);
     
-    // Wait a bit for the user to be properly set, then initiate call if we're the interviewer
-    if (currentUser.role === 'interviewer' && localStreamRef.current) {
+    // Use joinForm.role instead of currentUser.role since currentUser might not be updated yet
+    if (joinForm.role === 'interviewer' && localStreamRef.current) {
       console.log('Initiating call as interviewer');
       setTimeout(() => {
         if (localStreamRef.current && !peerConnectionRef.current) {
           initiateCall();
         }
-      }, 1500);
+      }, 1000); // Reduced timeout
     }
   }
 });
@@ -610,6 +610,8 @@ const initializeMedia = useCallback(async () => {
 
     return peerConnection;
   }, [remoteUser?.socketId]);
+
+
 const initiateCall = useCallback(async () => {
   console.log('Initiating call...');
   if (!localStreamRef.current || !socketRef.current || !remoteUser) {
@@ -644,7 +646,18 @@ const initiateCall = useCallback(async () => {
     console.error('Error creating offer:', error);
   }
 }, [createPeerConnection, remoteUser]);
-
+// Add this useEffect after your existing useEffects
+useEffect(() => {
+  // Initiate call when remote user joins and we're the interviewer
+  if (remoteUser && currentUser.role === 'interviewer' && localStreamRef.current && !peerConnectionRef.current) {
+    console.log('Initiating call from useEffect as interviewer');
+    setTimeout(() => {
+      if (localStreamRef.current && !peerConnectionRef.current) {
+        initiateCall();
+      }
+    }, 1000);
+  }
+}, [remoteUser, currentUser.role, initiateCall]);
  const handleWebRTCOffer = useCallback(async (data: { offer: RTCSessionDescriptionInit, from: string }) => {
   console.log('Handling WebRTC offer from:', data.from);
   if (!localStreamRef.current || !socketRef.current) {
@@ -681,7 +694,7 @@ const initiateCall = useCallback(async () => {
     console.error('Error handling offer:', error);
   }
 }, [createPeerConnection]);
-  
+ // Add createPeerConnection to dependencies
   const resetPeerConnection = useCallback(() => {
   if (peerConnectionRef.current) {
     peerConnectionRef.current.close();
