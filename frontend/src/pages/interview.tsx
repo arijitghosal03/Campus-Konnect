@@ -358,6 +358,7 @@ const InterviewRoom: React.FC = () => {
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const remoteStreamRef = useRef<MediaStream | null>(null);
+  const iceCandidateQueue = useRef<RTCIceCandidateInit[]>([]);
 
   // Add cleanup flag to prevent state updates after unmount
   const isUnmountingRef = useRef(false);
@@ -695,7 +696,7 @@ const initiateCall = useCallback(async () => {
     console.error('Error creating offer:', error);
   }
 }, [createPeerConnection, remoteUser]);
-// Add this useEffect after your existing useEffects
+
 useEffect(() => {
   // Initiate call when remote user joins and we're the interviewer
   if (remoteUser && currentUser.role === 'interviewer' && localStreamRef.current && !peerConnectionRef.current) {
@@ -706,7 +707,8 @@ useEffect(() => {
       }
     }, 1000);
   }
-}, [remoteUser, currentUser.role, initiateCall]);
+}, [remoteUser, currentUser.role, localStreamRef.current, peerConnectionRef.current, initiateCall]);
+
  const handleWebRTCOffer = useCallback(async (data: { offer: RTCSessionDescriptionInit, from: string }) => {
   console.log('Handling WebRTC offer from:', data.from);
   if (!localStreamRef.current || !socketRef.current) {
@@ -727,6 +729,18 @@ useEffect(() => {
 
     await peerConnectionRef.current.setRemoteDescription(data.offer);
     
+    if (iceCandidateQueue.current.length > 0) {
+      console.log(`Processing ${iceCandidateQueue.current.length} queued ICE candidates.`);
+      for (const candidate of iceCandidateQueue.current) {
+        try {
+          await peerConnectionRef.current.addIceCandidate(candidate);
+        } catch (error) {
+          console.error('Error adding queued ICE candidate:', error);
+        }
+      }
+      iceCandidateQueue.current = []; 
+    }
+
     const answer = await peerConnectionRef.current.createAnswer({
       offerToReceiveAudio: true,
       offerToReceiveVideo: true
@@ -743,68 +757,84 @@ useEffect(() => {
     console.error('Error handling offer:', error);
   }
 }, [createPeerConnection]);
- // Add createPeerConnection to dependencies
-  const resetPeerConnection = useCallback(() => {
-  if (peerConnectionRef.current) {
-    peerConnectionRef.current.close();
-    peerConnectionRef.current = null;
-  }
-  if (remoteStreamRef.current) {
-    remoteStreamRef.current.getTracks().forEach(track => track.stop());
-    remoteStreamRef.current = null;
-  }
-  // Debug remote video
-useEffect(() => {
-  if (remoteVideoRef.current) {
-    const video = remoteVideoRef.current;
-    
-    const handleLoadedMetadata = () => {
-      console.log('Remote video metadata loaded:', {
-        videoWidth: video.videoWidth,
-        videoHeight: video.videoHeight,
-        duration: video.duration
-      });
-    };
-    
-    const handleCanPlay = () => {
-      console.log('Remote video can play');
-      video.play().catch(console.error);
-    };
-    
-    video.addEventListener('loadedmetadata', handleLoadedMetadata);
-    video.addEventListener('canplay', handleCanPlay);
-    
-    return () => {
-      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
-      video.removeEventListener('canplay', handleCanPlay);
-    };
-  }
-}, [remoteUser]);
-}, []);
 
- const handleWebRTCAnswer = useCallback(async (data: { answer: RTCSessionDescriptionInit }) => {
-  console.log('Handling WebRTC answer');
-  console.log('Answer SDP:', data.answer.sdp); // Add this for debugging
-  
-  if (peerConnectionRef.current) {
-    try {
-      await peerConnectionRef.current.setRemoteDescription(data.answer);
-      console.log('WebRTC answer handled successfully');
-    } catch (error) {
-      console.error('Error handling answer:', error);
+  // This useEffect is for debugging the remote video stream.
+  // It was previously misplaced inside a useCallback, which is invalid.
+  useEffect(() => {
+    if (remoteVideoRef.current) {
+      const video = remoteVideoRef.current;
+      
+      const handleLoadedMetadata = () => {
+        console.log('Remote video metadata loaded:', {
+          videoWidth: video.videoWidth,
+          videoHeight: video.videoHeight,
+          duration: video.duration
+        });
+      };
+      
+      const handleCanPlay = () => {
+        console.log('Remote video can play');
+        video.play().catch(console.error);
+      };
+      
+      video.addEventListener('loadedmetadata', handleLoadedMetadata);
+      video.addEventListener('canplay', handleCanPlay);
+      
+      return () => {
+        video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        video.removeEventListener('canplay', handleCanPlay);
+      };
     }
-  }
-}, []);
+  }, [remoteUser]);
 
-  const handleWebRTCIceCandidate = useCallback(async (data: { candidate: RTCIceCandidateInit }) => {
-    console.log('Handling ICE candidate');
+  const resetPeerConnection = useCallback(() => {
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close();
+      peerConnectionRef.current = null;
+    }
+    if (remoteStreamRef.current) {
+      remoteStreamRef.current.getTracks().forEach(track => track.stop());
+      remoteStreamRef.current = null;
+    }
+  }, []);
+
+  const handleWebRTCAnswer = useCallback(async (data: { answer: RTCSessionDescriptionInit }) => {
+    console.log('Handling WebRTC answer');
     if (peerConnectionRef.current) {
       try {
-        await peerConnectionRef.current.addIceCandidate(data.candidate);
-        console.log('ICE candidate added successfully');
+        await peerConnectionRef.current.setRemoteDescription(data.answer);
+        console.log('WebRTC answer handled successfully');
+
+        
+        if (iceCandidateQueue.current.length > 0) {
+          console.log(`Processing ${iceCandidateQueue.current.length} queued ICE candidates.`);
+          for (const candidate of iceCandidateQueue.current) {
+            try {
+              await peerConnectionRef.current.addIceCandidate(candidate);
+            } catch (error) {
+              console.error('Error adding queued ICE candidate:', error);
+            }
+          }
+          iceCandidateQueue.current = []; 
+        }
       } catch (error) {
-        console.error('Error adding ICE candidate:', error);
+        console.error('Error handling answer:', error);
       }
+    }
+  }, []);
+
+  const handleWebRTCIceCandidate = useCallback(async (data: { candidate: RTCIceCandidateInit }) => {
+    console.log('Received ICE candidate.');
+    if (peerConnectionRef.current?.remoteDescription) {
+      try {
+        await peerConnectionRef.current.addIceCandidate(data.candidate);
+        console.log('ICE candidate added successfully.');
+      } catch (error) {
+        console.error('Error adding received ICE candidate:', error);
+      }
+    } else {
+      console.log('Peer connection not ready, queueing ICE candidate.');
+      iceCandidateQueue.current.push(data.candidate);
     }
   }, []);
 
