@@ -617,30 +617,68 @@ const initializeMedia = useCallback(async () => {
       console.log('ICE gathering complete');
     }
   };
-  peerConnection.ontrack = (event) => {
-    console.log('Received remote track:', event.track.kind, event.streams.length);
+peerConnection.ontrack = (event) => {
+  console.log('Received remote track:', event.track.kind, event.streams.length);
+  
+  // Get the stream from the event
+  const [remoteStream] = event.streams;
+  
+  if (remoteStream && remoteVideoRef.current) {
+    console.log('Setting remote stream to video element, tracks:', remoteStream.getTracks().length);
     
-    const [remoteStream] = event.streams;
+    // Clear any existing srcObject first
+    if (remoteVideoRef.current.srcObject) {
+      remoteVideoRef.current.srcObject = null;
+    }
     
-    if (remoteStream && remoteVideoRef.current) {
-      console.log('Setting remote stream to video element, tracks:', remoteStream.getTracks().length);
-      remoteVideoRef.current.srcObject = remoteStream;
-      remoteStreamRef.current = remoteStream;
-      
-      // Force play with better error handling
-      remoteVideoRef.current.play()
-        .then(() => console.log('Remote video playing successfully'))
-        .catch(error => {
-          console.error('Error playing remote video:', error);
-          // Try again after a short delay
-          setTimeout(() => {
+    // Set the new stream
+    remoteVideoRef.current.srcObject = remoteStream;
+    remoteStreamRef.current = remoteStream;
+    
+    // Handle play with better error handling
+    const playVideo = async () => {
+      try {
+        if (remoteVideoRef.current && remoteVideoRef.current.srcObject) {
+          await remoteVideoRef.current.play();
+          console.log('Remote video playing successfully');
+        }
+      } catch (error) {
+        console.error('Error playing remote video:', error);
+        
+        // Retry with user interaction requirement
+        if (typeof error === 'object' && error !== null && 'name' in error && (error as any).name === 'NotAllowedError') {
+          console.log('Autoplay blocked, waiting for user interaction');
+          // Add click handler to enable play
+          const enablePlay = () => {
             if (remoteVideoRef.current) {
+              remoteVideoRef.current.play().catch(console.error);
+              document.removeEventListener('click', enablePlay);
+            }
+          };
+          document.addEventListener('click', enablePlay);
+        } else {
+          // Retry after a delay for other errors
+          setTimeout(() => {
+            if (remoteVideoRef.current && remoteVideoRef.current.srcObject) {
               remoteVideoRef.current.play().catch(console.error);
             }
           }, 1000);
-        });
+        }
+      }
+    };
+    
+    // Wait for metadata to load before playing
+    remoteVideoRef.current.onloadedmetadata = () => {
+      console.log('Remote video metadata loaded');
+      playVideo();
+    };
+    
+    // If metadata is already loaded, play immediately
+    if (remoteVideoRef.current.readyState >= 1) {
+      playVideo();
     }
-  };
+  }
+};
 
   peerConnection.onconnectionstatechange = () => {
     console.log('Peer connection state changed:', peerConnection.connectionState);
