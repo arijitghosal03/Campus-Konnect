@@ -678,12 +678,15 @@ const initiateCall = useCallback(async () => {
 
     const offer = await peerConnectionRef.current.createOffer({
       offerToReceiveAudio: true,
-      offerToReceiveVideo: true
+      offerToReceiveVideo: true,
+      iceRestart: false
     });
     
     await peerConnectionRef.current.setLocalDescription(offer);
     
     console.log('Sending WebRTC offer to:', remoteUser.socketId);
+    console.log('Offer SDP:', offer.sdp); // Add this for debugging
+    
     socketRef.current.emit('webrtc-offer', {
       offer,
       to: remoteUser.socketId
@@ -779,17 +782,19 @@ useEffect(() => {
 }, [remoteUser]);
 }, []);
 
-  const handleWebRTCAnswer = useCallback(async (data: { answer: RTCSessionDescriptionInit }) => {
-    console.log('Handling WebRTC answer');
-    if (peerConnectionRef.current) {
-      try {
-        await peerConnectionRef.current.setRemoteDescription(data.answer);
-        console.log('WebRTC answer handled successfully');
-      } catch (error) {
-        console.error('Error handling answer:', error);
-      }
+ const handleWebRTCAnswer = useCallback(async (data: { answer: RTCSessionDescriptionInit }) => {
+  console.log('Handling WebRTC answer');
+  console.log('Answer SDP:', data.answer.sdp); // Add this for debugging
+  
+  if (peerConnectionRef.current) {
+    try {
+      await peerConnectionRef.current.setRemoteDescription(data.answer);
+      console.log('WebRTC answer handled successfully');
+    } catch (error) {
+      console.error('Error handling answer:', error);
     }
-  }, []);
+  }
+}, []);
 
   const handleWebRTCIceCandidate = useCallback(async (data: { candidate: RTCIceCandidateInit }) => {
     console.log('Handling ICE candidate');
