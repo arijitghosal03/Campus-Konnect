@@ -363,12 +363,25 @@ const InterviewRoom: React.FC = () => {
   const isUnmountingRef = useRef(false);
 
   // WebRTC Configuration
-  const rtcConfig = {
-    iceServers: [
-      { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' }
-    ]
-  };
+ const rtcConfig = {
+  iceServers: [
+    // Google STUN servers
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun3.l.google.com:19302' },
+    { urls: 'stun:stun4.l.google.com:19302' },
+    
+    // Additional reliable STUN servers
+    { urls: 'stun:stun.nextcloud.com:443' },
+    { urls: 'stun:stun.sipgate.net:3478' },
+    { urls: 'stun:stun.ekiga.net' },
+    
+    // Xirsys free STUN (backup)
+    { urls: 'stun:global.stun.twilio.com:3478' }
+  ],
+  iceCandidatePoolSize: 10
+};
 
   // Initialize WebSocket connection - FIXED VERSION
   const initializeSocket = useCallback(() => {
@@ -572,45 +585,81 @@ const initializeMedia = useCallback(async () => {
     return null;
   }
 }, []);
-  // WebRTC functions
-  const createPeerConnection = useCallback(() => {
-    console.log('Creating peer connection...');
-    const peerConnection = new RTCPeerConnection(rtcConfig);
+  // WebRTC functionsconst createPeerConnection = useCallback(() => {
+  console.log('Creating peer connection with config:', rtcConfig);
+  const peerConnection = new RTCPeerConnection(rtcConfig);
 
-    peerConnection.onicecandidate = (event) => {
-      if (event.candidate && socketRef.current) {
-        console.log('Sending ICE candidate');
-        socketRef.current.emit('webrtc-ice-candidate', {
-          candidate: event.candidate,
-          to: remoteUser?.socketId
+  peerConnection.onicecandidate = (event) => {
+    console.log('ICE candidate event:', event.candidate);
+    if (event.candidate && socketRef.current) {
+      console.log('Sending ICE candidate:', event.candidate.candidate);
+      socketRef.current.emit('webrtc-ice-candidate', {
+        candidate: event.candidate,
+        to: remoteUser?.socketId
+      });
+    } else if (!event.candidate) {
+      console.log('ICE gathering complete');
+    }
+  };
+  
+ const createPeerConnection = useCallback(() => {
+  console.log('Creating peer connection with config:', rtcConfig);
+  const peerConnection = new RTCPeerConnection(rtcConfig);
+
+  peerConnection.onicecandidate = (event) => {
+    console.log('ICE candidate event:', event.candidate);
+    if (event.candidate && socketRef.current) {
+      console.log('Sending ICE candidate:', event.candidate.candidate);
+      socketRef.current.emit('webrtc-ice-candidate', {
+        candidate: event.candidate,
+        to: remoteUser?.socketId
+      });
+    } else if (!event.candidate) {
+      console.log('ICE gathering complete');
+    }
+  };
+  
+  peerConnection.ontrack = (event) => {
+    console.log('Received remote track:', event.track.kind, event.streams.length);
+    
+    const [remoteStream] = event.streams;
+    
+    if (remoteStream && remoteVideoRef.current) {
+      console.log('Setting remote stream to video element, tracks:', remoteStream.getTracks().length);
+      remoteVideoRef.current.srcObject = remoteStream;
+      remoteStreamRef.current = remoteStream;
+      
+      // Force play with better error handling
+      remoteVideoRef.current.play()
+        .then(() => console.log('Remote video playing successfully'))
+        .catch(error => {
+          console.error('Error playing remote video:', error);
+          // Try again after a short delay
+          setTimeout(() => {
+            if (remoteVideoRef.current) {
+              remoteVideoRef.current.play().catch(console.error);
+            }
+          }, 1000);
         });
-      }
-    };
-    
-    peerConnection.ontrack = (event) => {
-  console.log('Received remote track:', event.track.kind);
-  
-  // Get the stream from the event
-  const [remoteStream] = event.streams;
-  
-  if (remoteStream && remoteVideoRef.current) {
-    console.log('Setting remote stream to video element');
-    remoteVideoRef.current.srcObject = remoteStream;
-    remoteStreamRef.current = remoteStream;
-    
-    // Force play the video
-    remoteVideoRef.current.play().catch(error => {
-      console.error('Error playing remote video:', error);
-    });
-  }
-};
-    peerConnection.onconnectionstatechange = () => {
-      console.log('Peer connection state:', peerConnection.connectionState);
-    };
+    }
+  };
 
-    return peerConnection;
-  }, [remoteUser?.socketId]);
+  peerConnection.onconnectionstatechange = () => {
+    console.log('Peer connection state changed:', peerConnection.connectionState);
+    console.log('ICE connection state:', peerConnection.iceConnectionState);
+    console.log('ICE gathering state:', peerConnection.iceGatheringState);
+  };
 
+  peerConnection.oniceconnectionstatechange = () => {
+    console.log('ICE connection state changed:', peerConnection.iceConnectionState);
+    if (peerConnection.iceConnectionState === 'failed') {
+      console.log('ICE connection failed, restarting...');
+      peerConnection.restartIce();
+    }
+  };
+
+  return peerConnection;
+}, [remoteUser?.socketId]);
 
 const initiateCall = useCallback(async () => {
   console.log('Initiating call...');
