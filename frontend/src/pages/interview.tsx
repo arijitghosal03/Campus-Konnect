@@ -585,7 +585,8 @@ const initializeMedia = useCallback(async () => {
     return null;
   }
 }, []);
-  // WebRTC functionsconst createPeerConnection = useCallback(() => {
+
+ const createPeerConnection = useCallback(() => {
   console.log('Creating peer connection with config:', rtcConfig);
   const peerConnection = new RTCPeerConnection(rtcConfig);
 
@@ -607,24 +608,6 @@ const initializeMedia = useCallback(async () => {
       console.log('ICE gathering complete');
     }
   };
-  
- const createPeerConnection = useCallback(() => {
-  console.log('Creating peer connection with config:', rtcConfig);
-  const peerConnection = new RTCPeerConnection(rtcConfig);
-
-  peerConnection.onicecandidate = (event) => {
-    console.log('ICE candidate event:', event.candidate);
-    if (event.candidate && socketRef.current) {
-      console.log('Sending ICE candidate:', event.candidate.candidate);
-      socketRef.current.emit('webrtc-ice-candidate', {
-        candidate: event.candidate,
-        to: remoteUser?.socketId
-      });
-    } else if (!event.candidate) {
-      console.log('ICE gathering complete');
-    }
-  };
-  
   peerConnection.ontrack = (event) => {
     console.log('Received remote track:', event.track.kind, event.streams.length);
     
