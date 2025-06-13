@@ -132,8 +132,8 @@ const Student = () => {
   const [isNewPostModalOpen, setIsNewPostModalOpen] = useState(false);
 
   useEffect(() => {
-    const value = localStorage.getItem("student");
-    if (value !== "1") {
+    const value = localStorage.getItem('role');
+    if (value !== "student") {
       router.push("/");
     }
   }, [router]);

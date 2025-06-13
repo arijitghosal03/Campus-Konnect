@@ -243,7 +243,7 @@ const JoinModal = ({
                 value={joinForm.roomId}
                 onChange={(e) => setJoinForm(prev => ({ ...prev, roomId: e.target.value.toUpperCase() }))}
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 font-mono transition-all"
-                placeholder="Enter 6-digit room ID"
+                placeholder="Enter room ID"
                 disabled={connectionStatus === 'connecting'}
                 maxLength={6}
               />
@@ -269,7 +269,7 @@ const JoinModal = ({
               value={joinForm.passkey}
               onChange={(e) => setJoinForm(prev => ({ ...prev, passkey: e.target.value.toUpperCase() }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-800 font-mono transition-all"
-              placeholder="Enter 4-digit passkey"
+              placeholder="Enter passkey"
               disabled={connectionStatus === 'connecting'}
               maxLength={4}
             />
@@ -831,8 +831,8 @@ const handleRoomIdChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) 
 
   // Generate room credentials
   const generateRoomCredentials = () => {
-    const roomId = Math.random().toString(36).substring(2, 12).toUpperCase();
-    const passkey = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const passkey = Math.random().toString(36).substring(2, 6).toUpperCase();
     return { roomId, passkey };
   };
 

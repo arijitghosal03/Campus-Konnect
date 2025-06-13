@@ -191,8 +191,10 @@ const SignUpPage = () => {
       });
 
       const data = await response.json();
-
+      
       if (response.ok) {
+        localStorage.setItem('role',JSON.stringify(data.user.role));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         switch (data.user.role) {
           case 'student':
             router.push('/student');
