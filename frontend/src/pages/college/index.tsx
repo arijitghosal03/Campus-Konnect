@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
+  CheckCircle,
   Building2, 
   GraduationCap, 
   Users, 
@@ -79,6 +80,7 @@ const CollegeDashboard = () => {
     summary: '',
     photos: []
   });
+  const [isMarkingCompleted, setIsMarkingCompleted] = useState(false);
 
   // College data
   const collegeInfo = {
@@ -124,152 +126,175 @@ const CollegeDashboard = () => {
     },
   ];
 
-  // Workshop data (mock data - would be fetched from MongoDB)
-  const upcomingWorkshops = [
-    {
-      id: 1,
-      title: "Machine Learning in Healthcare",
-      speaker: {
-        name: "Dr. Rajesh Kumar",
-        designation: "Senior Data Scientist",
-        company: "Google Health",
-        bio: "10+ years of experience in ML applications in healthcare",
-        image: "/api/placeholder/80/80"
-      },
-      topic: "Applications of Machine Learning in Medical Diagnosis and Treatment",
-      date: "2025-07-15",
-      time: "10:00 AM - 4:00 PM",
-      venue: "Main Auditorium, GCELT",
-      requirements: [
-        "Basic knowledge of Python",
-        "Laptop with Python environment",
-        "Interest in healthcare technology"
-      ],
-      contact: {
-        email: "rajesh.kumar@googlehealth.com",
-        phone: "+91-9876543210"
-      },
-      status: "pending",
-      description: "This workshop will cover the latest trends in machine learning applications for healthcare, including diagnostic tools and treatment recommendations.",
-      maxParticipants: 100,
-      targetAudience: "Final year students and faculty",
-      submittedDate: "2025-06-10"
-    },
-    {
-      id: 2,
-      title: "Blockchain Technology Workshop",
-      speaker: {
-        name: "Priya Sharma",
-        designation: "Blockchain Architect",
-        company: "IBM",
-        bio: "Leading blockchain implementations across various industries",
-        image: "/api/placeholder/80/80"
-      },
-      topic: "Decentralized Applications and Smart Contracts",
-      date: "2025-07-20",
-      time: "9:00 AM - 5:00 PM",
-      venue: "Computer Lab 1, GCELT",
-      requirements: [
-        "Basic programming knowledge",
-        "Understanding of cryptography basics",
-        "Laptop with latest browser"
-      ],
-      contact: {
-        email: "priya.sharma@ibm.com",
-        phone: "+91-8765432109"
-      },
-      status: "approved",
-      description: "Hands-on workshop on building decentralized applications using Ethereum and smart contract development.",
-      maxParticipants: 50,
-      targetAudience: "Computer Science and IT students",
-      submittedDate: "2025-06-05"
-    },
-    {
-      id: 3,
-      title: "Advanced Leather Processing Techniques",
-      speaker: {
-        name: "Prof. Amit Banerjee",
-        designation: "Senior Researcher",
-        company: "Central Leather Research Institute",
-        bio: "30+ years in leather technology research and development",
-        image: "/api/placeholder/80/80"
-      },
-      topic: "Sustainable Leather Manufacturing Processes",
-      date: "2025-07-25",
-      time: "11:00 AM - 3:00 PM",
-      venue: "Leather Technology Lab, GCELT",
-      requirements: [
-        "Safety equipment will be provided",
-        "Basic knowledge of chemistry",
-        "Lab coat recommended"
-      ],
-      contact: {
-        email: "amit.banerjee@clri.org",
-        phone: "+91-7654321098"
-      },
-      status: "pending",
-      description: "Workshop focusing on eco-friendly leather processing methods and quality control techniques.",
-      maxParticipants: 30,
-      targetAudience: "Leather Technology students and researchers",
-      submittedDate: "2025-06-12"
-    }
-  ];
+  // Workshop da
+  interface Workshop {
+  _id?: string;
+  id?: number;
+  title: string;
+  speaker: {
+    name: string;
+    designation: string;
+    company: string;
+    bio?: string;
+    image?: string;
+  };
+  topic: string;
+  date: string;
+  time: string;
+  venue: string;
+  requirements: string[];
+  contact: {
+    email: string;
+    phone: string;
+  };
+  status: 'pending' | 'approved' | 'declined' | 'completed' | 'upcoming';
+  description: string;
+  maxParticipants: number;
+  targetAudience: string;
+  submittedDate: string;
+  hasSummary?: boolean;
+  summary?: WorkshopSummary;
+}
 
-  const completedWorkshops = [
-    {
-      id: 4,
-      title: "AI in Industry 4.0",
-      speaker: {
-        name: "Dr. Suresh Patel",
-        designation: "CTO",
-        company: "TechCorp Solutions"
-      },
-      contact: {
-        email: "amit.banerjee@clri.org",
-        phone: "+91-7654321098"
-      },
-      date: "2025-05-15",
-      venue: "Main Auditorium, GCELT",
-      status: "completed",
-      hasSummary: false
-    },
-    {
-      id: 5,
-      title: "Cloud Computing Fundamentals",
-      speaker: {
-        name: "Ms. Anita Roy",
-        designation: "Cloud Architect",
-        company: "AWS"
-      },
-      date: "2025-04-20",
-      venue: "Computer Lab 2, GCELT",
-      status: "completed",
-      hasSummary: true,
-      contact: {
-        email: "amit.banerjee@clri.org",
-        phone: "+91-7654321098"
-      },
-      summary: {
-        students: 85,
-        budget: 15000,
-        photos: 12,
-        summary: "Highly successful workshop with great student engagement. Covered AWS basics, EC2, S3, and Lambda functions."
-      }
+interface WorkshopSummary {
+  students: number | string;
+  budget: number | string;
+  summary: string;
+  photos: string[] | number;
+}
+const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+
+
+// Fetch all workshops from MongoDB
+const fetchWorkshops = async (): Promise<{ upcoming: Workshop[], completed: Workshop[] }> => {
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const response = await fetch(`${apiUrl}/api/workshops`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch workshops: ${response.status} ${response.statusText}`);
     }
-  ];
+    
+    const data = await response.json();
+    console.log('Fetched data:', data); // Debug log
+    
+    // Handle different response structures
+    let allWorkshops: Workshop[] = [];
+    
+    if (Array.isArray(data)) {
+      allWorkshops = data;
+    } else if (data && data.workshops && Array.isArray(data.workshops)) {
+      allWorkshops = data.workshops;
+    } else if (data && data.data && Array.isArray(data.data)) {
+      allWorkshops = data.data;
+    } else {
+      console.warn('Unexpected data structure:', data);
+      return { upcoming: [], completed: [] };
+    }
+    
+    // Validate that we have an array
+    if (!Array.isArray(allWorkshops)) {
+      console.error('Expected array but got:', typeof allWorkshops, allWorkshops);
+      return { upcoming: [], completed: [] };
+    }
+    
+    // Separate workshops by status
+    const upcoming = allWorkshops.filter(w => 
+      w && w.status && (w.status === 'pending' || w.status === 'approved' || w.status === 'upcoming')
+    );
+    const completed = allWorkshops.filter(w => 
+      w && w.status && w.status === 'completed'
+    );
+    
+    console.log(`Found ${upcoming.length} upcoming and ${completed.length} completed workshops`);
+    return { upcoming, completed };
+    
+  } catch (error) {
+    console.error('Error fetching workshops:', error);
+    return { upcoming: [], completed: [] };
+  }
+};
+
+// Update workshop status (approve/decline)
+const updateWorkshopStatus = async (workshopId: string, status: 'approved' | 'declined'): Promise<boolean> => {
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const response = await fetch(`${apiUrl}/api/workshops/${workshopId}/status`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ status }),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to update workshop status');
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error updating workshop status:', error);
+    return false;
+  }
+};
+
+// Update workshop details
+const updateWorkshop = async (workshopId: string, workshopData: Partial<Workshop>): Promise<boolean> => {
+  try {
+   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const response = await fetch(`${apiUrl}/api/workshops/${workshopId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(workshopData),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to update workshop');
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error updating workshop:', error);
+    return false;
+  }
+};
+
+// Update workshop summary
+const updateWorkshopSummary = async (workshopId: string, summaryData: WorkshopSummary): Promise<boolean> => {
+  try {
+   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const response = await fetch(`${apiUrl}/api/workshops/${workshopId}/summary`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ summary: summaryData, hasSummary: true }),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to update workshop summary');
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error updating workshop summary:', error);
+    return false;
+  }
+};
+
 
   const statistics = {
     graphics: 85,
     theme: 65,
     template: 50
   };
-const [workshops, setWorkshops] = useState<{
-  upcoming: Workshop[];
-  completed: Workshop[];
-}>({
-  upcoming: [...upcomingWorkshops],
-  completed: [...completedWorkshops]
+const [workshops, setWorkshops] = useState<{ upcoming: Workshop[], completed: Workshop[] }>({
+  upcoming: [],
+  completed: []
 });
+
 
   const menuItems = [
     { id: 'home', label: 'Home Page', icon: Home },
@@ -285,74 +310,116 @@ const [workshops, setWorkshops] = useState<{
     { id: 'settings', label: 'Settings', icon: Settings },
     { id: 'logout', label: 'Logout', icon: LogOut },
   ];
+useEffect(() => {
+  const loadWorkshops = async () => {
+    const workshopData = await fetchWorkshops();
+    setWorkshops(workshopData);
+  };
+  
+  loadWorkshops();
+}, []);
 
   // Workshop functions
-const handleApproveWorkshop = async (workshopId: number) => {
-  const workshop = workshops.upcoming.find(w => w.id === workshopId);
+const handleApproveWorkshop = async (workshopId: string) => {
+  const workshop = workshops.upcoming.find(w => w._id === workshopId);
   if (workshop) {
-    // Update the workshop status
-    const updatedUpcoming = workshops.upcoming.map(w => 
-      w.id === workshopId ? { ...w, status: 'approved' } : w
-    );
+    const mongoId = workshop._id || workshop.id?.toString() || '';
+    const success = await updateWorkshopStatus(mongoId, 'approved');
     
-    setWorkshops(prev => ({
-      ...prev,
-      upcoming: updatedUpcoming
-    }));
-
-    // Simulate sending email
-    try {
-      console.log(`Sending approval email to ${workshop.contact.email}`);
-      // In real implementation, make API call to send email
-      // await sendApprovalEmail(workshop);
+    if (success) {
+      // Update local state
+      const updatedUpcoming = workshops.upcoming.map(w => w._id === workshopId ? { ...w, status: 'approved' } : w
+      );
       
-      alert(`Workshop "${workshop.title}" approved successfully! 
+      setWorkshops(prev => ({
+  ...prev,
+  upcoming: updatedUpcoming.map(w => ({
+    ...w,
+    status: w.status as "upcoming" | "completed" | "pending" | "approved" | "declined"
+  }))
+}));
+
+      // Simulate sending email
+      try {
+        console.log(`Sending approval email to ${workshop.contact.email}`);
+        alert(`Workshop "${workshop.title}" approved successfully! 
 Approval email sent to: ${workshop.speaker.name} (${workshop.contact.email})`);
-    } catch (error) {
-      console.error('Error sending email:', error);
-      alert('Workshop approved but failed to send email notification.');
+      } catch (error) {
+        console.error('Error sending email:', error);
+        alert('Workshop approved but failed to send email notification.');
+      }
+    } else {
+      alert('Failed to approve workshop. Please try again.');
     }
   }
 };
-
-const handleDeclineWorkshop = async (workshopId: number) => {
-  const workshop = workshops.upcoming.find(w => w.id === workshopId);
+const handleDeclineWorkshop = async (workshopId: string) => {
+  const workshop = workshops.upcoming.find(w => w._id === workshopId);
   if (workshop) {
-    const updatedUpcoming = workshops.upcoming.map(w => 
-      w.id === workshopId ? { ...w, status: 'declined' } : w
-    );
+    const mongoId = workshop._id || workshop.id?.toString() || '';
+    const success = await updateWorkshopStatus(mongoId, 'declined');
     
-    setWorkshops(prev => ({
-      ...prev,
-      upcoming: updatedUpcoming
-    }));
-
-    // Simulate sending decline email
-    try {
-      console.log(`Sending decline notification to ${workshop.contact.email}`);
-      alert(`Workshop "${workshop.title}" declined. 
+    if (success) {
+      const updatedUpcoming = workshops.upcoming.map(w => w._id === workshopId? { ...w, status: 'declined' } : w
+      );
+      
+   setWorkshops(prev => ({
+  ...prev,
+  upcoming: updatedUpcoming.map(w => ({
+    ...w,
+    status: w.status as "upcoming" | "completed" | "pending" | "approved" | "declined"
+  }))
+}));
+      // Simulate sending decline email
+      try {
+        console.log(`Sending decline notification to ${workshop.contact.email}`);
+        alert(`Workshop "${workshop.title}" declined. 
 Notification sent to: ${workshop.speaker.name} (${workshop.contact.email})`);
-    } catch (error) {
-      console.error('Error sending decline notification:', error);
+      } catch (error) {
+        console.error('Error sending decline notification:', error);
+      }
+    } else {
+      alert('Failed to decline workshop. Please try again.');
     }
   }
 };
-
+const handleSummarizeWorkshop = (workshop: Workshop) => {
+  setSelectedWorkshop(workshop);
+  setWorkshopSummary(workshop.summary || { students: '', budget: '', summary: '', photos: [] });
+  setUploadedFiles([]);
+  setShowSummaryModal(true);
+  setIsMarkingCompleted(false); // This is for existing completed workshops
+}
+const handleMarkCompleted = (workshop: Workshop) => {
+  setSelectedWorkshop(workshop);
+  setWorkshopSummary({ students: '', budget: '', summary: '', photos: [] });
+  setUploadedFiles([]);
+  setShowSummaryModal(true);
+  setIsMarkingCompleted(true); // Add this state variable
+};
 const handleSaveWorkshop = async () => {
   if (!editingWorkshop) return;
   
-  const updatedUpcoming = workshops.upcoming.map(w => 
-    w.id === editingWorkshop.id ? { ...editingWorkshop } : w
-  );
+  const mongoId = editingWorkshop._id || editingWorkshop.id?.toString() || '';
+  const success = await updateWorkshop(mongoId, editingWorkshop);
   
-  setWorkshops(prev => ({
-    ...prev,
-    upcoming: updatedUpcoming
-  }));
-  
-  setEditingWorkshop(null);
-  setShowWorkshopDetails(false);
-  alert('Workshop details updated successfully!');
+  if (success) {
+    const updatedUpcoming = workshops.upcoming.map(w => 
+      (w.id || parseInt(w._id || '0')) === (editingWorkshop.id || parseInt(editingWorkshop._id || '0')) 
+        ? { ...editingWorkshop } : w
+    );
+    
+    setWorkshops(prev => ({
+      ...prev,
+      upcoming: updatedUpcoming
+    }));
+    
+    setEditingWorkshop(null);
+    setShowWorkshopDetails(false);
+    alert('Workshop details updated successfully!');
+  } else {
+    alert('Failed to update workshop details. Please try again.');
+  }
 };
 
 const handleSaveSummary = async () => {
@@ -369,39 +436,75 @@ const handleSaveSummary = async () => {
         parseInt(workshopSummary.photos) || 0 : workshopSummary.photos)
   };
 
-  const updatedCompleted = workshops.completed.map(w => 
-    w.id === selectedWorkshop.id ? { 
-      ...w, 
+  const mongoId = selectedWorkshop._id || selectedWorkshop.id?.toString() || '';
+  
+  // If marking as completed, update status to completed
+  if (isMarkingCompleted) {
+    const updateData = {
+      status: 'completed' as const,
       summary: summaryData,
-      hasSummary: true 
-    } : w
-  );
-  
-  setWorkshops(prev => ({
-    ...prev,
-    completed: updatedCompleted
-  }));
-  
-  setShowSummaryModal(false);
-  setWorkshopSummary({ students: '', budget: '', summary: '', photos: [] });
-  alert('Workshop summary saved successfully!');
+      hasSummary: true
+    };
+    
+    const success = await updateWorkshop(mongoId, updateData);
+    
+    if (success) {
+      // Move workshop from upcoming to completed
+      const updatedUpcoming = workshops.upcoming.filter(w => 
+        (w.id || parseInt(w._id || '0')) !== (selectedWorkshop.id || parseInt(selectedWorkshop._id || '0'))
+      );
+      
+      const completedWorkshop = {
+        ...selectedWorkshop,
+        status: 'completed' as const,
+        summary: summaryData,
+        hasSummary: true
+      };
+       setWorkshops(prev => ({
+        upcoming: updatedUpcoming,
+        completed: [...prev.completed, completedWorkshop]
+      }));
+      
+      setShowSummaryModal(false);
+      setWorkshopSummary({ students: '', budget: '', summary: '', photos: [] });
+      setUploadedFiles([]);
+      setIsMarkingCompleted(false);
+      alert('Workshop marked as completed and summary saved successfully!');
+    } else {
+      alert('Failed to mark workshop as completed. Please try again.');
+    }
+  } else {
+    // Regular summary update for already completed workshops
+    const success = await updateWorkshopSummary(mongoId, summaryData);
+    
+    if (success) {
+      const updatedCompleted = workshops.completed.map(w => 
+        (w.id || parseInt(w._id || '0')) === (selectedWorkshop.id || parseInt(selectedWorkshop._id || '0')) 
+          ? { ...w, summary: summaryData, hasSummary: true } : w
+      );
+      
+      setWorkshops(prev => ({
+        ...prev,
+        completed: updatedCompleted
+      }));
+      
+      setShowSummaryModal(false);
+      setWorkshopSummary({ students: '', budget: '', summary: '', photos: [] });
+      setUploadedFiles([]);
+      alert('Workshop summary saved successfully!');
+    } else {
+      alert('Failed to save workshop summary. Please try again.');
+    }
+  }
 };
-const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
-interface ImageUploadEvent extends React.ChangeEvent<HTMLInputElement> {
-  target: HTMLInputElement & EventTarget & { files: FileList | null };
-}
-  const handleEditWorkshop = (workshop: Workshop) => {
-    setEditingWorkshop({ ...workshop });
-    setSelectedWorkshop(workshop);
-    setShowWorkshopDetails(true);
-  };
-    const handleSummarizeWorkshop = (workshop: Workshop) => {
-    setSelectedWorkshop(workshop);
-    setWorkshopSummary(workshop.summary || { students: '', budget: '', summary: '', photos: [] });
-    setShowSummaryModal(true);
-  };
-const handleImageUpload = (event: ImageUploadEvent) => {
+const handleEditWorkshop = (workshop: Workshop) => {
+  setEditingWorkshop({ ...workshop });
+  setSelectedWorkshop(workshop);
+  setShowWorkshopDetails(true);
+};
+
+const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
   const files: File[] = event.target.files ? Array.from(event.target.files) : [];
   const validFiles: File[] = files.filter((file: File) => {
     const isValidType: boolean = file.type.startsWith('image/');
@@ -422,6 +525,8 @@ const handleImageUpload = (event: ImageUploadEvent) => {
     ] as string[]
   }));
 };
+
+  // Remove uploaded file
 
 const removeUploadedFile = (index: number) => {
   const newFiles = uploadedFiles.filter((_, i) => i !== index);
@@ -544,26 +649,39 @@ const renderWorkshops = () => (
                     setShowWorkshopDetails(true);
                   }}
                   className="px-3 py-1 text-blue-600 border border-blue-600 rounded hover:bg-blue-50 text-sm"
+                  title="View Details"
                 >
                   <Eye className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => handleEditWorkshop(workshop)}
                   className="px-3 py-1 text-gray-600 border border-gray-300 rounded hover:bg-gray-50 text-sm"
+                  title="Edit Workshop"
                 >
                   <Edit className="w-4 h-4" />
                 </button>
-                {workshop.status === 'pending' && (
+                {workshop.status === 'approved' && (
+                  <button
+                    onClick={() => handleMarkCompleted(workshop)}
+                    className="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 text-sm"
+                    title="Mark as Completed"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                  </button>
+                )}
+                {workshop.status === 'upcoming' && (
                   <>
                     <button
-                      onClick={() => handleApproveWorkshop(workshop.id)}
+                      onClick={() => handleApproveWorkshop(workshop._id!)}
                       className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+                      title="Approve"
                     >
                       <Check className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleDeclineWorkshop(workshop.id)}
+                      onClick={() => handleDeclineWorkshop(workshop._id!)}
                       className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+                      title="Decline"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -573,6 +691,12 @@ const renderWorkshops = () => (
             </div>
           </div>
         ))}
+        {workshops.upcoming.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+            <p>No upcoming workshops found.</p>
+          </div>
+        )}
       </div>
     </div>
 
@@ -595,6 +719,12 @@ const renderWorkshops = () => (
                     <MapPin className="w-4 h-4" />
                     <span>{workshop.venue}</span>
                   </div>
+                  {workshop.summary && (
+                    <div className="flex items-center gap-1">
+                      <Users className="w-4 h-4" />
+                      <span>{workshop.summary.students} students attended</span>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -607,18 +737,146 @@ const renderWorkshops = () => (
                   onClick={() => handleSummarizeWorkshop(workshop)}
                   className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                 >
-                  {workshop.hasSummary ? 'View Summary' : 'Add Summary'}
+                  {workshop.hasSummary ? 'View/Edit Summary' : 'Add Summary'}
                 </button>
               </div>
             </div>
           </div>
         ))}
+        {workshops.completed.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            <CheckCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+            <p>No completed workshops found.</p>
+          </div>
+        )}
       </div>
     </div>
+    
+    {/* Summary Modal */}
+    {showSummaryModal && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900">
+                {isMarkingCompleted ? 'Complete Workshop & Add Summary' : 'Workshop Summary'}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowSummaryModal(false);
+                  setIsMarkingCompleted(false);
+                  setWorkshopSummary({ students: '', budget: '', summary: '', photos: [] });
+                  setUploadedFiles([]);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            {selectedWorkshop && (
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-semibold text-gray-900">{selectedWorkshop.title}</h4>
+                <p className="text-gray-600">Speaker: {selectedWorkshop.speaker.name}</p>
+                <p className="text-gray-600">Date: {new Date(selectedWorkshop.date).toLocaleDateString()}</p>
+              </div>
+            )}
+            
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Number of Students
+                  </label>
+                  <input
+                    type="number"
+                    value={workshopSummary.students}
+                    onChange={(e) => setWorkshopSummary(prev => ({ ...prev, students: e.target.value }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter number of students"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Budget Spent (₹)
+                  </label>
+                  <input
+                    type="number"
+                    value={workshopSummary.budget}
+                    onChange={(e) => setWorkshopSummary(prev => ({ ...prev, budget: e.target.value }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter budget amount"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Workshop Summary
+                </label>
+                <textarea
+                  value={workshopSummary.summary}
+                  onChange={(e) => setWorkshopSummary(prev => ({ ...prev, summary: e.target.value }))}
+                  rows={4}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter workshop summary, key learnings, feedback, etc."
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Upload Photos
+                </label>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                {uploadedFiles.length > 0 && (
+                  <div className="mt-2 space-y-2">
+                    {uploadedFiles.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                        <span className="text-sm text-gray-600">{file.name}</span>
+                        <button
+                          onClick={() => removeUploadedFile(index)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowSummaryModal(false);
+                  setIsMarkingCompleted(false);
+                  setWorkshopSummary({ students: '', budget: '', summary: '', photos: [] });
+                  setUploadedFiles([]);
+                }}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveSummary}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                {isMarkingCompleted ? 'Complete Workshop' : 'Save Summary'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
   </div>
 );
-
- 
   const renderTraining = () => (
     <div className="bg-white rounded-xl p-6">
       <h3 className="text-xl font-bold text-gray-900 mb-6">Training Programs</h3>
@@ -855,7 +1113,7 @@ const renderWorkshops = () => (
                   <button className="text-blue-600 text-sm font-medium hover:text-blue-700">View All</button>
                 </div>
                 <div className="space-y-4">
-                  {upcomingWorkshops.slice(0, 2).map((workshop, index) => (
+                  {workshops.upcoming.slice(0, 2).map((workshop, index) => (
                     <div key={index} className="space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-gray-900">{workshop.title}</span>
@@ -890,18 +1148,18 @@ const renderWorkshops = () => (
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">Total Workshops</span>
-                    <span className="font-semibold">{upcomingWorkshops.length + completedWorkshops.length}</span>
+                    <span className="font-semibold">{workshops.upcoming.length + workshops.completed.length}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">Pending Approval</span>
                     <span className="font-semibold text-yellow-600">
-                      {upcomingWorkshops.filter(w => w.status === 'pending').length}
+                      {workshops.upcoming.filter(w => w.status === 'pending').length}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">Approved</span>
                     <span className="font-semibold text-green-600">
-                      {upcomingWorkshops.filter(w => w.status === 'approved').length}
+                      {workshops.upcoming.filter(w => w.status === 'approved').length}
                     </span>
                   </div>
                 </div>
@@ -1095,14 +1353,14 @@ const renderWorkshops = () => (
                     {selectedWorkshop.status === 'pending' && (
                       <>
                         <button
-                          onClick={() => handleDeclineWorkshop(selectedWorkshop.id)}
+                          onClick={() => selectedWorkshop._id !== undefined && handleDeclineWorkshop(selectedWorkshop._id)}
                           className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2"
                         >
                           <X className="w-4 h-4" />
                           Decline
                         </button>
                         <button
-                          onClick={() => handleApproveWorkshop(selectedWorkshop.id)}
+                          onClick={() => selectedWorkshop._id !== undefined && handleApproveWorkshop(selectedWorkshop._id)}
                           className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
                         >
                           <Check className="w-4 h-4" />

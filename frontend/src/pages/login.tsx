@@ -549,7 +549,7 @@ const Home: React.FC = () => {
                 onCancel={closeModal}
                 onSubmit={async (data) => {
                   try {
-                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
                     const response = await fetch(`${apiUrl}/auth/login`, {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },

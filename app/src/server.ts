@@ -5,11 +5,44 @@ import bcrypt from 'bcrypt';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import User from './models/userSchema';
+import workshop from './models/workshop';
 import StudentProfile from './models/studentProfileSchema';
 import Company from './models/companySchema';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
+// For file uploads
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+
+const uploadsDir = 'uploads/workshops/';
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req: Express.Request, file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
+    cb(null, 'uploads/workshops/');
+  },
+  filename: (req: Express.Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  fileFilter: (req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(null, false);
+    }
+  }
+});
 
 dotenv.config();
 
@@ -907,7 +940,620 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack);
   res.status(500).json({ message: 'Something went wrong!' });
 });
+app.post('/api/workshops', (async (req: CustomRequest, res: Response) => {
+  try {
+    const workshopData = req.body;
 
+    // Validation
+    if (!workshopData.title || 
+        !workshopData.speaker?.name || 
+        !workshopData.topic || 
+        !workshopData.date || 
+        !workshopData.time || 
+        !workshopData.venue || 
+        !workshopData.contact?.email || 
+        !workshopData.contact?.phone || 
+        !workshopData.description || 
+        !workshopData.maxParticipants || 
+        !workshopData.targetAudience) {
+      res.status(400).json({ message: 'All required fields must be provided' });
+      return;
+    }
+
+    // Set default image if not provided
+    if (!workshopData.speaker.image) {
+      workshopData.speaker.image = "/api/placeholder/80/80";
+    }
+
+    // Filter out empty requirements
+    if (workshopData.requirements) {
+      workshopData.requirements = workshopData.requirements.filter((req: string) => req.trim() !== '');
+    }
+
+    const workshopDoc = new workshop({
+      ...workshopData,
+      maxParticipants: parseInt(workshopData.maxParticipants),
+      status: 'upcoming', // Default status
+      createdBy: req.user?._id,
+      submittedDate: new Date()
+    });
+
+    await workshopDoc.save();
+
+    res.status(201).json({
+      message: 'Workshop registered successfully',
+      workshop: {
+        id: workshopDoc._id,
+        title: workshopDoc.title,
+        speaker: workshopDoc.speaker.name,
+        status: workshopDoc.status,
+        submittedDate: workshopDoc.submittedDate
+      }
+    });
+  } catch (error: any) {
+    console.error('Error creating workshop:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}) as CustomRequestHandler);
+
+// Get all workshops
+app.get('/api/workshops', (async (req: Request, res: Response) => {
+  try {
+    const { status, topic, limit } = req.query;
+    
+    let query: any = {};
+    
+    if (status) {
+      query.status = status;
+    }
+    
+    if (topic) {
+      query.topic = { $regex: topic, $options: 'i' };
+    }
+
+    let workshopsQuery = workshop.find(query).sort({ date: 1 });
+    
+    if (limit) {
+      workshopsQuery = workshopsQuery.limit(parseInt(limit as string));
+    }
+
+    const workshops = await workshopsQuery.exec();
+    
+    res.json({
+      success: true,
+      count: workshops.length,
+      workshops
+    });
+  } catch (error: any) {
+    console.error('Error fetching workshops:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}));
+
+// Get workshop by ID
+app.get('/api/workshops/:id', (async (req: Request, res: Response) => {
+  try {
+    const workshopDoc = await workshop.findById(req.params.id);
+    
+    if (!workshopDoc) {
+      res.status(404).json({ message: 'Workshop not found' });
+      return;
+    }
+
+    res.json({
+      success: true,
+      workshop: workshopDoc
+    });
+  } catch (error: any) {
+    console.error('Error fetching workshop:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}));
+
+// Update workshop
+app.put('/api/workshops/:id', (async (req: CustomRequest, res: Response) => {
+  try {
+    const workshopDoc = await workshop.findById(req.params.id) as (typeof workshop) extends { prototype: infer T } ? T : any;
+    
+    if (!workshopDoc) {
+      res.status(404).json({ message: 'Workshop not found' });
+      return;
+    }
+
+    // Optional: Check if the user created this workshop
+    
+
+    const updatedWorkshop = await workshop.findByIdAndUpdate(
+      req.params.id,
+      { ...req.body, updatedAt: new Date() },
+      { new: true, runValidators: true }
+    );
+
+    res.json({
+      message: 'Workshop updated successfully',
+      workshop: updatedWorkshop
+    });
+  } catch (error: any) {
+    console.error('Error updating workshop:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}) as CustomRequestHandler);
+
+// Delete workshop
+app.delete('/api/workshops/:id', (async (req: CustomRequest, res: Response) => {
+  try {
+    const workshopDoc = await workshop.findById(req.params.id);
+    
+    if (!workshopDoc) {
+      res.status(404).json({ message: 'Workshop not found' });
+      return;
+    }
+
+    // Optional: Check if the user created this workshop
+   
+
+    await workshop.findByIdAndDelete(req.params.id);
+
+    res.json({ message: 'Workshop deleted successfully' });
+  } catch (error: any) {
+    console.error('Error deleting workshop:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}) as CustomRequestHandler);
+
+// Register for workshop (for students)
+app.post('/api/workshops/:id/register',  (async (req: CustomRequest, res: Response) => {
+  try {
+    const workshopDoc = await workshop.findById(req.params.id);
+    
+    if (!workshopDoc) {
+      res.status(404).json({ message: 'Workshop not found' });
+      return;
+    }
+
+    // Check if workshop is full
+    if (workshopDoc.registeredParticipants && workshopDoc.registeredParticipants.length >= workshopDoc.maxParticipants) {
+      res.status(400).json({ message: 'Workshop is full' });
+      return;
+    }
+
+
+
+    // Add user to registered participants
+    const participantData = {
+      userId: req.user?._id,
+      username: req.user?.username,
+      email: req.user?.email,
+      registeredAt: new Date()
+    };
+
+    workshopDoc.registeredParticipants = workshopDoc.registeredParticipants || [];
+    workshopDoc.registeredParticipants.push(participantData);
+
+    await workshopDoc.save();
+
+    res.json({
+      message: 'Successfully registered for workshop',
+      workshop: {
+        id: workshopDoc._id,
+        title: workshopDoc.title,
+        registeredCount: workshopDoc.registeredParticipants.length
+      }
+    });
+  } catch (error: any) {
+    console.error('Error registering for workshop:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}) as CustomRequestHandler);
+
+// Get workshops for a specific user (registered workshops)
+app.get('/api/workshops/user/registered',  (async (req: CustomRequest, res: Response) => {
+  try {
+    const workshops = await workshop.find({
+      'registeredParticipants.userId': req.user?._id
+    }).sort({ date: 1 });
+
+    res.json({
+      success: true,
+      count: workshops.length,
+      workshops
+    });
+  } catch (error: any) {
+    console.error('Error fetching user workshops:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}) as CustomRequestHandler);
+
+// Update workshop status (approve/decline)
+app.put('/api/workshops/:id/status', (async (req: CustomRequest, res: Response) => {
+  try {
+    const { status } = req.body;
+    
+    // Validate status
+    if (!status || !['approved', 'declined', 'pending', 'completed', 'upcoming'].includes(status)) {
+      res.status(400).json({ message: 'Invalid status provided' });
+      return;
+    }
+
+    const workshopDoc = await workshop.findById(req.params.id);
+    
+    if (!workshopDoc) {
+      res.status(404).json({ message: 'Workshop not found' });
+      return;
+    }
+
+    // Update workshop status
+    const updatedWorkshop = await workshop.findByIdAndUpdate(
+      req.params.id,
+      { 
+        status: status,
+        updatedAt: new Date(),
+        ...(status === 'approved' && { approvedAt: new Date() }),
+        ...(status === 'declined' && { declinedAt: new Date() })
+      },
+      { new: true, runValidators: true }
+    );
+
+    // TODO: Send email notification to workshop organizer
+    // You can implement email service here
+    console.log(`Workshop ${status}: ${updatedWorkshop?.title} - Email should be sent to: ${updatedWorkshop?.contact.email}`);
+
+    res.json({
+      success: true,
+      message: `Workshop ${status} successfully`,
+      workshop: updatedWorkshop
+    });
+  } catch (error: any) {
+    console.error('Error updating workshop status:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}) as CustomRequestHandler);
+
+// Update workshop summary
+app.put('/api/workshops/:id/summary',  (async (req: CustomRequest, res: Response) => {
+  try {
+    const { summary, hasSummary } = req.body;
+    
+    if (!summary) {
+      res.status(400).json({ message: 'Summary data is required' });
+      return;
+    }
+
+    // Validate summary structure
+    if (typeof summary.students !== 'number' || 
+        typeof summary.budget !== 'number' || 
+        typeof summary.summary !== 'string') {
+      res.status(400).json({ message: 'Invalid summary data structure' });
+      return;
+    }
+
+    const workshopDoc = await workshop.findById(req.params.id);
+    
+    if (!workshopDoc) {
+      res.status(404).json({ message: 'Workshop not found' });
+      return;
+    }
+
+    // Update workshop with summary
+    const updatedWorkshop = await workshop.findByIdAndUpdate(
+      req.params.id,
+      { 
+        summary: summary,
+        hasSummary: hasSummary || true,
+        updatedAt: new Date()
+      },
+      { new: true, runValidators: true }
+    );
+
+    res.json({
+      success: true,
+      message: 'Workshop summary updated successfully',
+      workshop: updatedWorkshop
+    });
+  } catch (error: any) {
+    console.error('Error updating workshop summary:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}) as CustomRequestHandler);
+
+// Get workshops by status (upcoming/completed)
+app.get('/api/workshops/status/:status', (async (req: CustomRequest, res: Response) => {
+  try {
+    const { status } = req.params;
+    const { limit, skip, sortBy = 'date', sortOrder = 'asc' } = req.query;
+    
+    // Validate status
+    if (!['pending', 'approved', 'declined', 'completed', 'upcoming'].includes(status)) {
+      res.status(400).json({ message: 'Invalid status parameter' });
+      return;
+    }
+
+    let query: any = { status };
+    
+    // Build query
+    let workshopsQuery = workshop.find(query);
+    
+    // Sorting
+    const sortDirection = sortOrder === 'desc' ? -1 : 1;
+    workshopsQuery = workshopsQuery.sort({ [sortBy as string]: sortDirection });
+    
+    // Pagination
+    if (skip) {
+      workshopsQuery = workshopsQuery.skip(parseInt(skip as string));
+    }
+    
+    if (limit) {
+      workshopsQuery = workshopsQuery.limit(parseInt(limit as string));
+    }
+
+    const workshops = await workshopsQuery.exec();
+    const totalCount = await workshop.countDocuments(query);
+    
+    res.json({
+      success: true,
+      count: workshops.length,
+      totalCount,
+      workshops
+    });
+  } catch (error: any) {
+    console.error('Error fetching workshops by status:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}) as CustomRequestHandler);
+
+// Bulk update workshop status
+app.put('/api/workshops/bulk/status',  (async (req: CustomRequest, res: Response) => {
+  try {
+    const { workshopIds, status } = req.body;
+    
+    if (!workshopIds || !Array.isArray(workshopIds) || workshopIds.length === 0) {
+      res.status(400).json({ message: 'Workshop IDs array is required' });
+      return;
+    }
+    
+    if (!status || !['approved', 'declined', 'pending', 'completed', 'upcoming'].includes(status)) {
+      res.status(400).json({ message: 'Invalid status provided' });
+      return;
+    }
+
+    // Update multiple workshops
+    const result = await workshop.updateMany(
+      { _id: { $in: workshopIds } },
+      { 
+        status: status,
+        updatedAt: new Date(),
+        ...(status === 'approved' && { approvedAt: new Date() }),
+        ...(status === 'declined' && { declinedAt: new Date() })
+      }
+    );
+
+    res.json({
+      success: true,
+      message: `${result.modifiedCount} workshops updated successfully`,
+      modifiedCount: result.modifiedCount
+    });
+  } catch (error: any) {
+    console.error('Error bulk updating workshop status:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}) as CustomRequestHandler);
+
+// Get workshop statistics
+app.get('/api/workshops/stats', (async (req: CustomRequest, res: Response) => {
+  try {
+    const { startDate, endDate } = req.query;
+    
+    let dateFilter: any = {};
+    if (startDate && endDate) {
+      dateFilter.createdAt = {
+        $gte: new Date(startDate as string),
+        $lte: new Date(endDate as string)
+      };
+    }
+
+    // Get counts by status
+    const statusStats = await workshop.aggregate([
+      { $match: dateFilter },
+      { $group: { _id: '$status', count: { $sum: 1 } } }
+    ]);
+
+    // Get total participants across all workshops
+    const participantStats = await workshop.aggregate([
+      { $match: { ...dateFilter, registeredParticipants: { $exists: true } } },
+      { $project: { participantCount: { $size: { $ifNull: ['$registeredParticipants', []] } } } },
+      { $group: { _id: null, totalParticipants: { $sum: '$participantCount' } } }
+    ]);
+
+    // Get workshops by topic
+    const topicStats = await workshop.aggregate([
+      { $match: dateFilter },
+      { $group: { _id: '$topic', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 }
+    ]);
+
+    // Get monthly workshop creation trend
+    const monthlyStats = await workshop.aggregate([
+      { $match: dateFilter },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { '_id.year': 1, '_id.month': 1 } }
+    ]);
+
+    res.json({
+      success: true,
+      stats: {
+        byStatus: statusStats,
+        totalParticipants: participantStats[0]?.totalParticipants || 0,
+        byTopic: topicStats,
+        monthly: monthlyStats
+      }
+    });
+  } catch (error: any) {
+    console.error('Error fetching workshop statistics:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}) as CustomRequestHandler);
+
+// Upload workshop photos
+app.post('/api/workshops/:id/photos',  upload.array('photos', 10), (async (req: CustomRequest, res: Response) => {
+  try {
+    const workshopDoc = await workshop.findById(req.params.id);
+    
+    if (!workshopDoc) {
+      res.status(404).json({ message: 'Workshop not found' });
+      return;
+    }
+
+    // Handle uploaded files
+    const files = req.files as Express.Multer.File[];
+    if (!files || files.length === 0) {
+      res.status(400).json({ message: 'No photos uploaded' });
+      return;
+    }
+
+    // Process uploaded files (store file paths or URLs)
+    const photoUrls = files.map(file => `/uploads/workshops/${file.filename}`);
+    
+    // Update workshop with photo URLs
+    const existingPhotos = workshopDoc.summary?.photos || [];
+    const updatedPhotos = Array.isArray(existingPhotos) 
+      ? [...existingPhotos, ...photoUrls] 
+      : photoUrls;
+
+    const updatedWorkshop = await workshop.findByIdAndUpdate(
+      req.params.id,
+      { 
+        'summary.photos': updatedPhotos,
+        updatedAt: new Date()
+      },
+      { new: true, runValidators: true }
+    );
+
+    res.json({
+      success: true,
+      message: 'Photos uploaded successfully',
+      photoUrls,
+      workshop: updatedWorkshop
+    });
+  } catch (error: any) {
+    console.error('Error uploading workshop photos:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}) as CustomRequestHandler);
+
+// Get workshops created by current user
+app.get('/api/workshops/user/created', (async (req: CustomRequest, res: Response) => {
+  try {
+    const { status, limit, skip } = req.query;
+    
+    let query: any = { createdBy: req.user?._id };
+    
+    if (status) {
+      query.status = status;
+    }
+
+    let workshopsQuery = workshop.find(query).sort({ createdAt: -1 });
+    
+    if (skip) {
+      workshopsQuery = workshopsQuery.skip(parseInt(skip as string));
+    }
+    
+    if (limit) {
+      workshopsQuery = workshopsQuery.limit(parseInt(limit as string));
+    }
+
+    const workshops = await workshopsQuery.exec();
+    const totalCount = await workshop.countDocuments(query);
+    
+    res.json({
+      success: true,
+      count: workshops.length,
+      totalCount,
+      workshops
+    });
+  } catch (error: any) {
+    console.error('Error fetching user created workshops:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}) as CustomRequestHandler);
+
+// Unregister from workshop
+app.delete('/api/workshops/:id/unregister',  (async (req: CustomRequest, res: Response) => {
+  try {
+    const workshopDoc = await workshop.findById(req.params.id);
+    
+    if (!workshopDoc) {
+      res.status(404).json({ message: 'Workshop not found' });
+      return;
+    }
+
+    // Check if user is registered
+    const isRegistered = workshopDoc.registeredParticipants?.some(
+      (p: any) => p.userId?.toString() === req.user?._id?.toString()
+    );
+
+    if (!isRegistered) {
+      res.status(400).json({ message: 'You are not registered for this workshop' });
+      return;
+    }
+
+    // Remove user from registered participants
+    workshopDoc.registeredParticipants = workshopDoc.registeredParticipants?.filter(
+      (p: any) => p.userId?.toString() !== req.user?._id?.toString()
+    ) || [];
+
+    await workshopDoc.save();
+
+    res.json({
+      success: true,
+      message: 'Successfully unregistered from workshop',
+      workshop: {
+        id: workshopDoc._id,
+        title: workshopDoc.title,
+        registeredCount: workshopDoc.registeredParticipants.length
+      }
+    });
+  } catch (error: any) {
+    console.error('Error unregistering from workshop:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}) as CustomRequestHandler);
+
+// Get workshop participants
+app.get('/api/workshops/:id/participants', (async (req: CustomRequest, res: Response) => {
+  try {
+    const workshopDoc = await workshop.findById(req.params.id)
+      .populate('registeredParticipants.userId', 'username email profile')
+      .exec();
+    
+    if (!workshopDoc) {
+      res.status(404).json({ message: 'Workshop not found' });
+      return;
+    }
+
+    res.json({
+      success: true,
+      workshop: {
+        id: workshopDoc._id,
+        title: workshopDoc.title,
+        maxParticipants: workshopDoc.maxParticipants,
+        registeredCount: workshopDoc.registeredParticipants?.length || 0
+      },
+      participants: workshopDoc.registeredParticipants || []
+    });
+  } catch (error: any) {
+    console.error('Error fetching workshop participants:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}) as CustomRequestHandler);
 // Start server
 async function startServer() {
   try {

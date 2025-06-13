@@ -149,7 +149,458 @@ const ProfessionalLandingPage = () => {
     "w-64 h-auto", // narrower
     "w-76 h-auto", // medium-wide
   ];
+  const [showWorkshopModal, setShowWorkshopModal] = useState(false);
+type WorkshopModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+};
+const WorkshopModal = ({ isOpen, onClose }: WorkshopModalProps) => {
+  const [formData, setFormData] = useState({
+    title: '',
+    speaker: {
+      name: '',
+      designation: '',
+      company: '',
+      bio: '',
+      image: ''
+    },
+    topic: '',
+    date: '',
+    time: '',
+    venue: '',
+    requirements: [''],
+    contact: {
+      email: '',
+      phone: ''
+    },
+    description: '',
+    maxParticipants: '',
+    targetAudience: ''
+  });
 
+  const addRequirement = () => {
+    setFormData({
+      ...formData,
+      requirements: [...formData.requirements, '']
+    });
+  };
+
+  const removeRequirement = (index: number) => {
+    const newRequirements = formData.requirements.filter((_, i) => i !== index);
+    setFormData({
+      ...formData,
+      requirements: newRequirements.length > 0 ? newRequirements : ['']
+    });
+  };
+
+  const updateRequirement = (index: number, value: string) => {
+    const newRequirements = [...formData.requirements];
+    newRequirements[index] = value;
+    setFormData({
+      ...formData,
+      requirements: newRequirements
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    try {
+      const submissionData = {
+        ...formData,
+        submittedDate: new Date().toISOString().split('T')[0]
+      };
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        const response = await fetch(`${apiUrl}/api/workshops`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submissionData),
+      });
+      
+      if (response.ok) {
+        alert('Workshop registered successfully!');
+        onClose();
+        setFormData({
+          title: '',
+          speaker: {
+            name: '',
+            designation: '',
+            company: '',
+            bio: '',
+            image: ''
+          },
+          topic: '',
+          date: '',
+          time: '',
+          venue: '',
+          requirements: [''],
+          contact: {
+            email: '',
+            phone: ''
+          },
+          description: '',
+          maxParticipants: '',
+          targetAudience: ''
+        });
+      }
+    } catch (error) {
+      console.error('Error submitting workshop:', error);
+      alert('Error submitting workshop. Please try again.');
+    }
+  };
+
+  if (!isOpen) return null;
+
+return (
+  <div className="fixed inset-0 bg-gradient-to-br from-purple-900/20 via-blue-900/20 to-indigo-900/20 backdrop-blur-xl flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+    {/* Animated background particles */}
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-blue-400 rounded-full animate-pulse opacity-60"></div>
+      <div className="absolute top-1/3 right-1/3 w-1 h-1 bg-purple-400 rounded-full animate-ping opacity-40 animation-delay-1000"></div>
+      <div className="absolute bottom-1/4 left-1/3 w-1.5 h-1.5 bg-indigo-400 rounded-full animate-pulse opacity-50 animation-delay-2000"></div>
+      <div className="absolute top-2/3 right-1/4 w-1 h-1 bg-cyan-400 rounded-full animate-ping opacity-30 animation-delay-3000"></div>
+    </div>
+
+    <div className="relative bg-white/95 backdrop-blur-2xl border border-white/20 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl shadow-purple-500/10 animate-in slide-in-from-bottom-8 duration-500">
+      {/* Gradient border animation */}
+      <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-500 rounded-3xl opacity-20 animate-pulse"></div>
+      <div className="absolute inset-[1px] bg-white/95 backdrop-blur-2xl rounded-3xl"></div>
+      
+      {/* Content */}
+      <div className="relative overflow-y-auto max-h-[90vh]">
+        <div className="p-8">
+          {/* Header with AI brain icon */}
+          <div className="flex justify-between items-center mb-8">
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg animate-pulse">
+                  <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                  </svg>
+                </div>
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full animate-ping"></div>
+              </div>
+              <div>
+                <h3 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                Workshop Studio
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">Want to organize a workshop at GCELT? <span className="text-sky-500">Contact Us</span> for more info</p>
+              </div>
+            </div>
+            <button 
+              onClick={onClose} 
+              className="group relative w-10 h-10 rounded-full bg-gray-100 hover:bg-red-50 transition-all duration-200 flex items-center justify-center hover:scale-110"
+            >
+              <X className="w-5 h-5 text-gray-500 group-hover:text-red-500 transition-colors" />
+              <div className="absolute inset-0 rounded-full bg-red-500/20 scale-0 group-hover:scale-100 transition-transform duration-200"></div>
+            </button>
+          </div>
+          
+          <form onSubmit={handleSubmit} className="space-y-8">
+          
+            <div className="group relative">
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-purple-500">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+              </div>
+              <input
+                type="text"
+                placeholder="Workshop Title"
+                value={formData.title}
+                onChange={(e) => setFormData({...formData, title: e.target.value})}
+                className="w-full pl-12 pr-4 py-4 bg-white/50 backdrop-blur-sm border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-purple-500/50 focus:border-purple-300 transition-all duration-200 hover:shadow-lg hover:shadow-purple-500/10 group-hover:bg-white/70"
+                required
+              />
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              </div>
+            </div>
+            <div className="group relative">
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7.01 5 5 7.01 5 9.5S7.01 14 9.5 14 14 11.99 14 9.5 11.99 5 9.5 5z"/>
+                </svg>
+              </div>
+              <input
+                type="text"
+                placeholder="Workshop Topic"
+                value={formData.topic}
+                onChange={(e) => setFormData({...formData, topic: e.target.value})}
+                className="w-full pl-12 pr-4 py-4 bg-white/50 backdrop-blur-sm border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/10 group-hover:bg-white/70"
+                required
+              />
+            </div>
+
+            {/* Speaker Information with enhanced styling */}
+            <div className="relative bg-gradient-to-br from-purple-50/80 to-blue-50/80 backdrop-blur-sm p-6 rounded-3xl border border-purple-200/30 hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-300">
+              <div className="absolute top-4 right-4">
+                <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-blue-500 rounded-lg flex items-center justify-center animate-pulse">
+                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                  </svg>
+                </div>
+              </div>
+              <h4 className="font-bold text-gray-800 mb-6 text-lg flex items-center gap-2">
+                <span className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></span>
+                Speaker Information
+              </h4>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <input
+                    type="text"
+                    placeholder="Speaker Name"
+                    value={formData.speaker.name}
+                    onChange={(e) => setFormData({
+                      ...formData, 
+                      speaker: {...formData.speaker, name: e.target.value}
+                    })}
+                    className="w-full p-4 bg-white/70 backdrop-blur-sm border border-white/50 rounded-2xl focus:ring-2 focus:ring-purple-500/50 focus:border-purple-300 transition-all duration-200 hover:bg-white/80"
+                    required
+                  />
+                  <input
+                    type="text"
+                    placeholder="Designation"
+                    value={formData.speaker.designation}
+                    onChange={(e) => setFormData({
+                      ...formData, 
+                      speaker: {...formData.speaker, designation: e.target.value}
+                    })}
+                    className="w-full p-4 bg-white/70 backdrop-blur-sm border border-white/50 rounded-2xl focus:ring-2 focus:ring-purple-500/50 focus:border-purple-300 transition-all duration-200 hover:bg-white/80"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <input
+                    type="text"
+                    placeholder="Company"
+                    value={formData.speaker.company}
+                    onChange={(e) => setFormData({
+                      ...formData, 
+                      speaker: {...formData.speaker, company: e.target.value}
+                    })}
+                    className="w-full p-4 bg-white/70 backdrop-blur-sm border border-white/50 rounded-2xl focus:ring-2 focus:ring-purple-500/50 focus:border-purple-300 transition-all duration-200 hover:bg-white/80"
+                    required
+                  />
+                  <input
+                    type="url"
+                    placeholder="Speaker Image URL"
+                    value={formData.speaker.image}
+                    onChange={(e) => setFormData({
+                      ...formData, 
+                      speaker: {...formData.speaker, image: e.target.value}
+                    })}
+                    className="w-full p-4 bg-white/70 backdrop-blur-sm border border-white/50 rounded-2xl focus:ring-2 focus:ring-purple-500/50 focus:border-purple-300 transition-all duration-200 hover:bg-white/80"
+                  />
+                </div>
+                <div className="relative">
+                  <textarea
+                    placeholder="Speaker Bio"
+                    value={formData.speaker.bio}
+                    onChange={(e) => setFormData({
+                      ...formData, 
+                      speaker: {...formData.speaker, bio: e.target.value}
+                    })}
+                    rows={3}
+                    className="w-full p-4 bg-white/70 backdrop-blur-sm border border-white/50 rounded-2xl focus:ring-2 focus:ring-purple-500/50 focus:border-purple-300 transition-all duration-200 hover:bg-white/80 resize-none"
+                    required
+                  />
+                  <div className="absolute bottom-3 right-3 text-xs text-gray-400 flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+                  
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Contact Information */}
+            <div className="relative bg-gradient-to-br from-blue-50/80 to-indigo-50/80 backdrop-blur-sm p-6 rounded-3xl border border-blue-200/30 hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300">
+              <div className="absolute top-4 right-4">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center animate-pulse">
+                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                  </svg>
+                </div>
+              </div>
+              <h4 className="font-bold text-gray-800 mb-6 text-lg flex items-center gap-2">
+                <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                Contact Information
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="email"
+                  placeholder="Contact Email"
+                  value={formData.contact.email}
+                  onChange={(e) => setFormData({
+                    ...formData, 
+                    contact: {...formData.contact, email: e.target.value}
+                  })}
+                  className="w-full p-4 bg-white/70 backdrop-blur-sm border border-white/50 rounded-2xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 transition-all duration-200 hover:bg-white/80"
+                  required
+                />
+                <input
+                  type="tel"
+                  placeholder="Contact Phone"
+                  value={formData.contact.phone}
+                  onChange={(e) => setFormData({
+                    ...formData, 
+                    contact: {...formData.contact, phone: e.target.value}
+                  })}
+                  className="w-full p-4 bg-white/70 backdrop-blur-sm border border-white/50 rounded-2xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-300 transition-all duration-200 hover:bg-white/80"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Workshop Details with modern grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-indigo-500">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+                  </svg>
+                </div>
+                <input
+                  type="date"
+                  value={formData.date}
+                  onChange={(e) => setFormData({...formData, date: e.target.value})}
+                  className="w-full pl-12 pr-4 py-4 bg-white/50 backdrop-blur-sm border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-300 transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/10"
+                  required
+                />
+              </div>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-pink-500">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Time (e.g., 9:00 AM - 5:00 PM)"
+                  value={formData.time}
+                  onChange={(e) => setFormData({...formData, time: e.target.value})}
+                  className="w-full pl-12 pr-4 py-4 bg-white/50 backdrop-blur-sm border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-pink-500/50 focus:border-pink-300 transition-all duration-200 hover:shadow-lg hover:shadow-pink-500/10"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <input
+                type="text"
+                placeholder="Venue"
+                value={formData.venue}
+                onChange={(e) => setFormData({...formData, venue: e.target.value})}
+                className="w-full p-4 bg-white/50 backdrop-blur-sm border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-green-500/50 focus:border-green-300 transition-all duration-200 hover:shadow-lg hover:shadow-green-500/10"
+                required
+              />
+              <input
+                type="number"
+                placeholder="Max Participants"
+                value={formData.maxParticipants}
+                onChange={(e) => setFormData({...formData, maxParticipants: e.target.value})}
+                className="w-full p-4 bg-white/50 backdrop-blur-sm border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500/50 focus:border-orange-300 transition-all duration-200 hover:shadow-lg hover:shadow-orange-500/10"
+                required
+              />
+            </div>
+
+            <input
+              type="text"
+              placeholder="Target Audience"
+              value={formData.targetAudience}
+              onChange={(e) => setFormData({...formData, targetAudience: e.target.value})}
+              className="w-full p-4 bg-white/50 backdrop-blur-sm border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-300 transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/10"
+              required
+            />
+
+            <div className="relative">
+              <textarea
+                placeholder="Workshop Description • AI will optimize for engagement"
+                value={formData.description}
+                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                rows={4}
+                className="w-full p-4 bg-white/50 backdrop-blur-sm border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-purple-500/50 focus:border-purple-300 transition-all duration-200 hover:shadow-lg hover:shadow-purple-500/10 resize-none"
+                required
+              />
+              
+            </div>
+
+            {/* Requirements with enhanced UI */}
+            <div className="relative bg-gradient-to-br from-gray-50/80 to-slate-50/80 backdrop-blur-sm p-6 rounded-3xl border border-gray-200/30">
+              <div className="flex justify-between items-center mb-6">
+                <h4 className="font-bold text-gray-800 text-lg flex items-center gap-2">
+                  <span className="w-2 h-2 bg-gray-500 rounded-full animate-pulse"></span>
+                  Requirements
+                </h4>
+                <button
+                  type="button"
+                  onClick={addRequirement}
+                  className="group flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white text-sm font-medium rounded-xl hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-200 hover:scale-105"
+                >
+                  <svg className="w-4 h-4 group-hover:rotate-90 transition-transform duration-200" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                  </svg>
+                  Add Requirement
+                </button>
+              </div>
+              <div className="space-y-3">
+                {formData.requirements.map((req, index) => (
+                  <div key={index} className="flex gap-3 group">
+                    <div className="flex-1 relative">
+                      <input
+                        type="text"
+                        placeholder={`Requirement ${index + 1}`}
+                        value={req}
+                        onChange={(e) => updateRequirement(index, e.target.value)}
+                        className="w-full p-4 bg-white/70 backdrop-blur-sm border border-white/50 rounded-2xl focus:ring-2 focus:ring-gray-500/50 focus:border-gray-300 transition-all duration-200 hover:bg-white/80 group-hover:shadow-md"
+                      />
+                    </div>
+                    {formData.requirements.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeRequirement(index)}
+                        className="w-12 h-12 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 hover:text-red-600 transition-all duration-200 flex items-center justify-center hover:scale-110 group-hover:shadow-lg"
+                      >
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M19 13H5v-2h14v2z"/>
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Enhanced Action Buttons */}
+            <div className="flex gap-4 pt-6">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 py-4 px-6 bg-white/70 backdrop-blur-sm border border-gray-300/50 text-gray-700 rounded-2xl hover:bg-gray-50/80 hover:shadow-lg transition-all duration-200 font-medium hover:scale-[1.02]"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="flex-1 py-4 px-6 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-2xl hover:from-purple-700 hover:to-blue-700 transition-all duration-200 font-medium hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/25 relative overflow-hidden group"
+              >
+                <span className="relative z-10 flex items-center justify-center gap-2">
+                  <svg className="w-5 h-5 group-hover:rotate-12 transition-transform duration-200" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                  </svg>
+                  Submit Workshop
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+};
   const getRandomCardClass = (index: number) => {
     return cardVariants[index % cardVariants.length];
   };
@@ -600,42 +1051,86 @@ const ProfessionalLandingPage = () => {
         </div>
       </section>
 
-      {/* Privacy & Security Section */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl p-12 text-center text-white">
-            <h2 className="text-5xl font-bold mb-6">
-              Our Commitment To<br />
-              <span className="text-blue-200">Privacy And Security</span>
-            </h2>
-            <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
-              Built with enterprise-grade security to protect your institution's sensitive data and ensure compliance with educational standards.
-            </p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
-                <Shield className="w-12 h-12 text-blue-200 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Data Encryption</h3>
-                <p className="text-blue-100 text-sm">End-to-end encryption for all sensitive information</p>
+    <div>
+<section className="py-20">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 rounded-3xl p-12 text-center text-white relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 bg-black/10"></div>
+      <div className="absolute top-0 left-0 w-full h-full">
+        <div className="absolute top-10 left-10 w-20 h-20 bg-white/10 rounded-full blur-xl"></div>
+        <div className="absolute bottom-10 right-10 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
+      </div>
+      
+      <div className="relative z-10">
+        <h2 className="text-5xl font-bold mb-6">
+          Take a <br />
+          <span className="text-purple-200 bg-gradient-to-r from-purple-200 to-blue-200 bg-clip-text text-transparent">
+            Workshop
+          </span>
+        </h2>
+        <p className="text-xl text-purple-100 mb-8 max-w-3xl mx-auto">
+          Join our expert-led workshops to enhance your skills and knowledge. Learn from industry professionals in interactive sessions.
+        </p>
+        
+        {/* Speaker Instructions */}
+        <div className="bg-white/15 backdrop-blur-lg rounded-2xl p-8 mb-12 max-w-4xl mx-auto border border-white/20">
+          <h3 className="text-2xl font-semibold mb-6 text-purple-100">For Workshop Speakers</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+            <div className="bg-white/10 rounded-xl p-4">
+              <div className="flex items-center mb-3">
+                <div className="w-8 h-8 bg-purple-400 rounded-full flex items-center justify-center mr-3">
+                  <span className="text-sm font-bold">1</span>
+                </div>
+                <h4 className="font-semibold">Prepare Your Content</h4>
               </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
-                <Globe className="w-12 h-12 text-blue-200 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">FERPA Compliant</h3>
-                <p className="text-blue-100 text-sm">Full compliance with educational privacy regulations</p>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
-                <Database className="w-12 h-12 text-blue-200 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Secure Infrastructure</h3>
-                <p className="text-blue-100 text-sm">Enterprise-grade security with 99.9% uptime</p>
-              </div>
+              <p className="text-purple-100 text-sm">Ensure your workshop materials are ready and tested before the session.</p>
             </div>
-
-            <button className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors mt-8">
-              Learn About Security
-            </button>
+            <div className="bg-white/10 rounded-xl p-4">
+              <div className="flex items-center mb-3">
+                <div className="w-8 h-8 bg-purple-400 rounded-full flex items-center justify-center mr-3">
+                  <span className="text-sm font-bold">2</span>
+                </div>
+                <h4 className="font-semibold">Interactive Engagement</h4>
+              </div>
+              <p className="text-purple-100 text-sm">Encourage questions and hands-on participation throughout the workshop.</p>
+            </div>
+            <div className="bg-white/10 rounded-xl p-4">
+              <div className="flex items-center mb-3">
+                <div className="w-8 h-8 bg-purple-400 rounded-full flex items-center justify-center mr-3">
+                  <span className="text-sm font-bold">3</span>
+                </div>
+                <h4 className="font-semibold">Technical Setup</h4>
+              </div>
+              <p className="text-purple-100 text-sm">Test all equipment and have backup plans for technical difficulties.</p>
+            </div>
+            <div className="bg-white/10 rounded-xl p-4">
+              <div className="flex items-center mb-3">
+                <div className="w-8 h-8 bg-purple-400 rounded-full flex items-center justify-center mr-3">
+                  <span className="text-sm font-bold">4</span>
+                </div>
+                <h4 className="font-semibold">Follow-up Resources</h4>
+              </div>
+              <p className="text-purple-100 text-sm">Provide additional materials and contact information for continued learning.</p>
+            </div>
           </div>
         </div>
-      </section>
+
+        <button 
+          onClick={() => setShowWorkshopModal(true)}
+          className="bg-white text-indigo-600 px-10 py-4 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+        >
+          Register Your Workshop
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+<WorkshopModal 
+        isOpen={showWorkshopModal} 
+        onClose={() => setShowWorkshopModal(false)} 
+      />
+    </div>
 
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-16">
