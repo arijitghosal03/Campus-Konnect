@@ -22,8 +22,11 @@ import {
   Mail
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function StudentPortal() {
+  const router = useRouter();
   const [accessForm, setAccessForm] = useState({
     companyCode: '',
     studentId: '',
@@ -38,6 +41,13 @@ export default function StudentPortal() {
     browser: true,
     internet: true
   });
+
+  useEffect(() => {
+    const value = localStorage.getItem('role');
+    if (value !== "student") {
+      router.push("/");
+    }
+  }, [router]);
 
   const [step, setStep] = useState('access'); // access, verify, systemCheck, ready
 

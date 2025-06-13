@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +27,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function CreateTest() {
   const [testConfig, setTestConfig] = useState({
@@ -61,6 +62,14 @@ export default function CreateTest() {
 
   const [questions, setQuestions] = useState([]);
   const [currentTab, setCurrentTab] = useState('basic');
+  const router = useRouter();
+
+  useEffect(() => {
+    const value = localStorage.getItem('role');
+    if (value !== "company") {
+      router.push("/");
+    }
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-gray-50">

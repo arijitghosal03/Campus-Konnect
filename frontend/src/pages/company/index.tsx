@@ -25,8 +25,8 @@ const Company = () => {
 
   // Redirect if the user is not authorized
   useEffect(() => {
-    const value = localStorage.getItem("company");
-    if (value !== "1") {
+    const value = localStorage.getItem('role');
+    if (value !== "company") {
       router.push("/");
     }
   }, [router]);

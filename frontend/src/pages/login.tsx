@@ -561,7 +561,7 @@ const Home: React.FC = () => {
 
                     if (response.ok) {
                       const user = result.user;
-                      localStorage.setItem('role',JSON.stringify(result.user.role));
+                      localStorage.setItem('role',result.user.role);
                       await new Promise((resolve) => setTimeout(resolve, 1000));
                       switch (user.role) {
                         case 'student':

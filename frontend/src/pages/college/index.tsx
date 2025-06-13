@@ -31,6 +31,7 @@ import {
   UserCheck,
   Eye
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 type WorkshopSummary = {
   students: number | string;
@@ -68,6 +69,7 @@ type Workshop = {
 };
 
 const CollegeDashboard = () => {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedWorkshop, setSelectedWorkshop] = useState<Workshop | null>(null);
@@ -81,6 +83,14 @@ const CollegeDashboard = () => {
     photos: []
   });
   const [isMarkingCompleted, setIsMarkingCompleted] = useState(false);
+
+
+  useEffect(() => {
+    const value = localStorage.getItem('role');
+    if (value !== "college") {
+      router.push("/");
+    }
+  }, [router]);
 
   // College data
   const collegeInfo = {

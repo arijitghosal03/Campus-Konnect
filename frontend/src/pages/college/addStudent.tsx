@@ -39,8 +39,8 @@ const Home = () => {
   });
   
   useEffect(() => {
-    const value = localStorage.getItem("college");
-    if (value !== "1") {
+    const value = localStorage.getItem('role');
+    if (value !== "college") {
       router.push("/");
     }
   }, [router]);

@@ -6,11 +6,20 @@ import { Brain, Code, UserCheck, GraduationCap, TrendingUp, Search, Award, Targe
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from 'next/navigation';
 const CompanyDashboard = () => {
-
+const router = useRouter();
 const [students, setStudents] = useState<Student[]>([]);
 const [loading, setLoading] = useState(true);
 const [error, setError] = useState<string | null>(null);
+
+
+useEffect(() => {
+  const value = localStorage.getItem('role');
+  if (value !== "company") {
+    router.push("/");
+  }
+}, [router]);
 
   useEffect(() => {
     const fetchStudents = async () => {

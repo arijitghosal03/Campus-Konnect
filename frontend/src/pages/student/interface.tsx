@@ -27,8 +27,10 @@ import MCQQuestion from '@/components/exam/MCQQuestion';
 import CodingQuestion from '@/components/exam/CodingQuestion';
 import QuestionNavigation from '@/components/exam/QuestionNavigation';
 import ProctoringPanel from '@/components/exam/ProctoringPanel';
+import { useRouter } from 'next/navigation';
 
 export default function ExamInterface() {
+  const router = useRouter();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(90 * 60); // 90 minutes in seconds
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -40,6 +42,13 @@ export default function ExamInterface() {
   const test = mockTests[0];
   const currentQuestion = test.questions[currentQuestionIndex];
   const progress = ((currentQuestionIndex + 1) / test.questions.length) * 100;
+
+  useEffect(() => {
+    const value = localStorage.getItem('role');
+    if (value !== "student") {
+      router.push("/");
+    }
+  }, [router]);
 
   // Timer effect
   useEffect(() => {

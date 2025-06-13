@@ -60,6 +60,12 @@ const StudentProfile = () => {
     date: '',
   });
 
+  useEffect(() => {
+    const value = localStorage.getItem('role');
+    if (value !== "student") {
+      router.push("/");
+    }
+  }, [router]);
 
   useEffect(() => {
     const fetchStudentData = () => {

@@ -64,6 +64,7 @@ interface BranchAnalysis {
 }
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +80,14 @@ export default function AdminDashboard() {
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+
+  useEffect(() => {
+    const value = localStorage.getItem('role');
+    if (value !== "company") {
+      router.push("/");
+    }
+  }, [router]);
 
   // Fetch students data
   useEffect(() => {
