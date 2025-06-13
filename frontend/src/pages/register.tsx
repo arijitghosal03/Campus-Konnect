@@ -178,6 +178,7 @@ const SignUpPage = () => {
         ...(role === "college" && { staffCode: formData.staffCode }),
         ...(role === "company" && { companyCode: formData.companyCode })
       };
+      //api url
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
