@@ -592,14 +592,17 @@ const initializeMedia = useCallback(async () => {
 
   peerConnection.onicecandidate = (event) => {
     console.log('ICE candidate event:', event.candidate);
+    console.log("Event",event);
+    console.log("SOcket",socketRef.current);
     if (event.candidate && socketRef.current) {
-      console.log('🧊 ICE Candidate Generated:', {
+      console.log(' ICE Candidate Generated:', {
         type: event.candidate.type,
         protocol: event.candidate.protocol,
         address: event.candidate.address,
         port: event.candidate.port,
         candidate: event.candidate.candidate
       });
+      
       socketRef.current.emit('webrtc-ice-candidate', {
         candidate: event.candidate,
         to: remoteUser?.socketId
