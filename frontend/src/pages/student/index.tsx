@@ -338,6 +338,19 @@ const Student = () => {
 
   const handleSave = () => {
     setStudent({ ...student, ...editData } as IStudent);
+    fetch(`/api/student/profile`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(editData)
+    }).then((res) => {
+      return res.json();
+    }).then((data) => {
+      console.log("Student data", data);
+    });
     setIsEditing(false);
   };
 

@@ -182,7 +182,7 @@ const SignUpPage = () => {
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
-      const response = await fetch(`${apiUrl}/auth/register`, {
+      const response = await fetch(`/api/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

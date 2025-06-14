@@ -805,10 +805,12 @@ app.get('/student/profile', authenticate, authorize(['student']), (async (req: C
 
 app.put('/student/profile', authenticate, authorize(['student']), (async (req: CustomRequest, res: Response) => {
   try {
-    const profileData = { ...req.body, userId: req.user?._id, updatedAt: new Date() };
-    
+    //@ts-ignore
+    const profileData = { ...req.body, roll_number: req.user?.rollNo, updatedAt: new Date() };
+    console.log(profileData);
     const profile = await Student.findOneAndUpdate(
-      { userId: req.user?._id },
+      //@ts-ignore
+      { roll_number: req.user?.rollNo },
       profileData,
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
