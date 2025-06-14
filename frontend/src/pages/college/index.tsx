@@ -988,7 +988,29 @@ const renderWorkshops = () => (
       case 'workshops': return renderWorkshops();
       case 'ranking': return renderRanking();
       case 'statistics': return renderStatistics();
-      case 'home': return renderHomePage();
+      case 'home': return (
+        <div className="bg-white rounded-xl p-6">
+          <h3 className="text-xl font-bold text-gray-900 mb-4">College Information</h3>
+          <div className="space-y-4">
+            <div>
+              <h4 className="font-semibold text-gray-700">Institution Name</h4>
+              <p className="text-gray-600">{collegeInfo.name}</p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-700">Established</h4>
+              <p className="text-gray-600">{collegeInfo.established}</p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-700">Location</h4>
+              <p className="text-gray-600">{collegeInfo.location}</p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-700">Accreditation</h4>
+              <p className="text-gray-600">{collegeInfo.accreditation}</p>
+            </div>
+          </div>
+        </div>
+      );
       default: return renderDashboard();
     }
   };
