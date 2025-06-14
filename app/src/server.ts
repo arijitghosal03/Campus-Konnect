@@ -6,7 +6,6 @@ import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import User from './models/userSchema';
 import workshop from './models/workshop';
-import StudentProfile from './models/studentProfileSchema';
 import Company from './models/companySchema';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -15,6 +14,7 @@ import cookieParser from 'cookie-parser';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { Student } from './models/students';
 
 const uploadsDir = 'uploads/workshops/';
 if (!fs.existsSync(uploadsDir)) {
@@ -492,6 +492,7 @@ app.get('/api/interview/rooms/:roomId', (req: Request, res: Response) => {
   }
 });
 
+
 app.post('/api/interview/rooms', authenticate, (req: CustomRequest, res: Response) => {
   try {
     const { roomId, passkey, duration = 60 } = req.body;
@@ -572,8 +573,8 @@ app.post('/auth/login', (async (req: Request, res: Response) => {
 
     res.cookie('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      secure: true,
+      sameSite: 'none',
       maxAge: 24 * 60 * 60 * 1000
     });
 
@@ -676,8 +677,8 @@ app.post('/auth/register', (async (req: Request, res: Response) => {
 
     res.cookie('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      secure: true,
+      sameSite: 'none',
       maxAge: 24 * 60 * 60 * 1000
     });
 
@@ -699,7 +700,9 @@ app.post('/auth/register', (async (req: Request, res: Response) => {
 // STUDENT ROUTES
 app.get('/student/profile', authenticate, authorize(['student']), (async (req: CustomRequest, res: Response) => {
   try {
-    const profile = await StudentProfile.findOne({ userId: req.user?._id });
+    console.log(req.user);
+    //@ts-ignore
+    const profile = await Student.findOne({ roll_number: req.user?.rollNo as string });
     if (!profile) {
       res.status(404).json({ message: 'Student profile not found' });
       return;
@@ -715,7 +718,7 @@ app.put('/student/profile', authenticate, authorize(['student']), (async (req: C
   try {
     const profileData = { ...req.body, userId: req.user?._id, updatedAt: new Date() };
     
-    const profile = await StudentProfile.findOneAndUpdate(
+    const profile = await Student.findOneAndUpdate(
       { userId: req.user?._id },
       profileData,
       { new: true, upsert: true, setDefaultsOnInsert: true }
@@ -728,81 +731,6 @@ app.put('/student/profile', authenticate, authorize(['student']), (async (req: C
   }
 }));
 
-app.get('/student/dashboard', authenticate, authorize(['student']), (async (req: CustomRequest, res: Response) => {
-  try {
-    const profile = await StudentProfile.findOne({ userId: req.user?._id });
-    if (!profile) {
-      res.json({
-        message: 'Profile not found',
-        profileExists: false,
-        user: {
-          id: req.user?._id,
-          username: req.user?.username,
-          email: req.user?.email,
-          role: req.user?.role
-        }
-      });
-      return;
-    }
-
-    const dashboardData = {
-      profileExists: true,
-      student: profile,
-      recentAchievements: profile.achievements.slice(-3),
-      upcomingAssignments: [],
-      notifications: []
-    };
-
-    res.json(dashboardData);
-  } catch (error: any) {
-    console.error('Error fetching student dashboard:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-}));
-
-// COLLEGE ADMIN ROUTES
-app.get('/college/dashboard', authenticate, authorize(['college']), (async (req: CustomRequest, res: Response) => {
-  try {
-    const students = await StudentProfile.find({}).populate('userId', 'username email');
-    const totalStudents = students.length;
-    
-    const departmentStats: Record<string, number> = {};
-    const yearStats: Record<string, number> = {};
-    
-    students.forEach((student) => {
-      if (student.department) {
-        departmentStats[student.department] = (departmentStats[student.department] || 0) + 1;
-      }
-      
-      if (student.year) {
-        yearStats[student.year] = (yearStats[student.year] || 0) + 1;
-      }
-    });
-
-    const studentInfo = students.map((student) => ({
-      id: student._id,
-      fullName: student.fullName,
-      studentId: student.studentId,
-      department: student.department,
-      year: student.year,
-      semester: student.semester,
-      cgpa: student.cgpa,
-      attendance: student.attendance,
-      email: student.email
-    }));
-
-    res.json({
-      totalStudents,
-      departmentStats,
-      yearStats,
-      studentInfo,
-      recentRegistrations: students.slice(-5)
-    });
-  } catch (error: any) {
-    console.error('Error fetching college dashboard:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-}));
 
 app.post('/college/students', authenticate, authorize(['college']), (async (req: CustomRequest, res: Response) => {
   try {
@@ -817,11 +745,11 @@ app.post('/college/students', authenticate, authorize(['college']), (async (req:
     });
     await user.save();
 
-    const studentProfile = new StudentProfile({
+    const studentProfile = new Student({
       ...studentData,
       userId: user._id
     });
-    await studentProfile.save();
+    await studentProfile.save();  
 
     res.status(201).json({ 
       message: 'Student added successfully', 
@@ -835,7 +763,7 @@ app.post('/college/students', authenticate, authorize(['college']), (async (req:
 
 app.get('/college/students', authenticate, authorize(['college']), (async (req: CustomRequest, res: Response) => {
   try {
-    const students = await StudentProfile.find({}).populate('userId', 'username email');
+    const students = await Student.find({}).populate('userId', 'username email');
     res.json(students);
   } catch (error: any) {
     console.error('Error fetching students:', error);
@@ -924,7 +852,7 @@ app.post('/company/jobs', authenticate, authorize(['company']), (async (req: Cus
 
 app.get('/company/students', authenticate, authorize(['company']), (async (req: CustomRequest, res: Response) => {
   try {
-    const students = await StudentProfile.find({})
+    const students = await Student.find({})
       .populate('userId', 'username email')
       .select('fullName studentId department year cgpa email achievements');
     

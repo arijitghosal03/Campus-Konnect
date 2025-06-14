@@ -309,11 +309,21 @@ const Student = () => {
   useEffect(() => {
     const fetchStudentData = async () => {
       setIsLoading(true);
-      setTimeout(() => {
-        setStudent(mockStudentData);
-        setEditData(mockStudentData);
+      // setTimeout(() => {
+      //   setStudent(mockStudentData);
+      //   setEditData(mockStudentData);
+      //   setIsLoading(false);
+      // }, 1500);
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/student/profile`).then((res) => {
+        return res.json();
+      }).then((data) => {
+        console.log("Student data", data);
+        setStudent(data);
+        setEditData(data);
         setIsLoading(false);
-      }, 1500);
+      }).catch((err) => {
+        console.log(err);
+      });
     };
 
     fetchStudentData();
