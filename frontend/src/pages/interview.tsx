@@ -93,71 +93,78 @@ const JoinModal = ({
   const router = useRouter();
 
   const handleBack = () => {
-    router.back();
+    if (onClose) {
+      onClose();
+    } else {
+      router.back();
+    }
   };
 
   return (
-
-    <div className="fixed inset-0 bg-gradient-to-br from-slate-900/95 via-blue-900/95 to-indigo-900/95 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="w-full max-w-md">
-        {/* Back Button */}
-        <button
-          onClick={handleBack}
-          className="mb-4 flex items-center gap-2 text-white/70 hover:text-white transition-all duration-200 group"
-        >
-          <svg className="w-5 h-5 transform group-hover:-translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          <span className="text-sm font-medium">Back</span>
-        </button>
-
+    <div className="fixed inset-0 bg-gradient-to-br from-slate-900/95 via-blue-900/95 to-indigo-900/95 backdrop-blur-sm flex items-center justify-center z-50 p-3">
+      <div className="w-full max-w-sm relative">
         {/* Main Modal */}
-        <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
+        <div className="bg-white/95 backdrop-blur-xl rounded-xl shadow-2xl border border-white/20 overflow-hidden relative">
+          {/* Close Button */}
+          <button
+            onClick={handleBack}
+            className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-200 group"
+          >
+            <svg 
+              className="w-4 h-4 text-white/80 group-hover:text-white transition-all duration-200 group-hover:rotate-90" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
           {/* Header with gradient */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-center relative overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 text-center relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20"></div>
             <div className="relative">
-              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3 backdrop-blur-sm">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2 backdrop-blur-sm">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-white mb-1">Join Interview</h2>
-              <p className="text-blue-100 text-sm">Connect to your interview room</p>
+              <h2 className="text-xl font-bold text-white mb-1">Join Interview</h2>
+              <p className="text-blue-100 text-xs">Connect to your interview room</p>
             </div>
           </div>
 
           {/* Content */}
-          <div className="p-6 space-y-5">
+          <div className="p-4 space-y-3">
             {/* Error Message */}
             {error && (
-              <div className="p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
+              <div className="p-3 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
                 <div className="flex items-center">
-                  <div className="w-5 h-5 bg-red-400 rounded-full flex items-center justify-center mr-3">
-                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <div className="w-4 h-4 bg-red-400 rounded-full flex items-center justify-center mr-2">
+                    <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                     </svg>
                   </div>
-                  <span className="text-red-800 text-sm font-medium">{error}</span>
+                  <span className="text-red-800 text-xs font-medium">{error}</span>
                 </div>
               </div>
             )}
 
             {/* Connecting Status */}
             {connectionStatus === 'connecting' && (
-              <div className="p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
+              <div className="p-3 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
                 <div className="flex items-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-400 border-t-transparent mr-3"></div>
-                  <span className="text-blue-800 text-sm font-medium">Connecting to room...</span>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-400 border-t-transparent mr-2"></div>
+                  <span className="text-blue-800 text-xs font-medium">Connecting to room...</span>
                 </div>
               </div>
             )}
 
             {/* Form Fields */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               {/* Name Input */}
               <div className="group">
-                <label className="block text-sm font-semibold mb-2 text-gray-700 group-focus-within:text-blue-600 transition-colors">
+                <label className="block text-xs font-semibold mb-1.5 text-gray-700 group-focus-within:text-blue-600 transition-colors">
                   Your Name <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
@@ -165,13 +172,13 @@ const JoinModal = ({
                     type="text"
                     value={joinForm.name}
                     onChange={(e) => setJoinForm(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-4 py-3 pl-11 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 text-gray-800 transition-all duration-200 placeholder-gray-400"
+                    className="w-full px-3 py-2.5 pl-9 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-gray-800 text-sm transition-all duration-200 placeholder-gray-400"
                     placeholder="Enter your full name"
                     disabled={connectionStatus === 'connecting'}
                     maxLength={50}
                   />
-                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div>
@@ -180,26 +187,26 @@ const JoinModal = ({
 
               {/* Role Selection */}
               <div className="group">
-                <label className="block text-sm font-semibold mb-2 text-gray-700 group-focus-within:text-blue-600 transition-colors">
+                <label className="block text-xs font-semibold mb-1.5 text-gray-700 group-focus-within:text-blue-600 transition-colors">
                   Your Role <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <select
                     value={joinForm.role}
                     onChange={(e) => setJoinForm(prev => ({ ...prev, role: e.target.value as 'interviewer' | 'candidate' }))}
-                    className="w-full px-4 py-3 pl-11 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 text-gray-800 transition-all duration-200 bg-white appearance-none cursor-pointer"
+                    className="w-full px-3 py-2.5 pl-9 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-gray-800 text-sm transition-all duration-200 bg-white appearance-none cursor-pointer"
                     disabled={connectionStatus === 'connecting'}
                   >
                     <option value="candidate">Candidate (Interviewee)</option>
                     <option value="interviewer">Interviewer</option>
                   </select>
-                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
                   </div>
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
@@ -208,43 +215,43 @@ const JoinModal = ({
 
               {/* Room ID Input */}
               <div className="group">
-                <label className="block text-sm font-semibold mb-2 text-gray-700 group-focus-within:text-blue-600 transition-colors">
+                <label className="block text-xs font-semibold mb-1.5 text-gray-700 group-focus-within:text-blue-600 transition-colors">
                   Room ID <span className="text-red-500">*</span>
                 </label>
-                <div className="flex gap-3">
+                <div className="flex gap-2">
                   <div className="relative flex-1">
                     <input
                       type="text"
                       value={joinForm.roomId}
                       onChange={(e) => setJoinForm(prev => ({ ...prev, roomId: e.target.value.toUpperCase() }))}
-                      className="w-full px-4 py-3 pl-11 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 text-gray-800 font-mono font-semibold tracking-wider transition-all duration-200 placeholder-gray-400"
+                      className="w-full px-3 py-2.5 pl-9 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-gray-800 font-mono font-semibold tracking-wider text-sm transition-all duration-200 placeholder-gray-400"
                       placeholder="ABC123"
                       disabled={connectionStatus === 'connecting'}
                       maxLength={6}
                     />
-                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
                       </svg>
                     </div>
                   </div>
                   <button
                     onClick={createRoom}
-                    className="px-4 py-3 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95"
+                    className="px-3 py-2.5 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95"
                     disabled={connectionStatus === 'connecting'}
                     title="Generate a new room ID"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
                   </button>
                 </div>
-                <p className="text-xs text-gray-500 mt-1.5 ml-1">6-character alphanumeric code</p>
+                <p className="text-xs text-gray-500 mt-1 ml-0.5">6-character alphanumeric code</p>
               </div>
 
               {/* Passkey Input */}
               <div className="group">
-                <label className="block text-sm font-semibold mb-2 text-gray-700 group-focus-within:text-blue-600 transition-colors">
+                <label className="block text-xs font-semibold mb-1.5 text-gray-700 group-focus-within:text-blue-600 transition-colors">
                   Passkey <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
@@ -252,18 +259,18 @@ const JoinModal = ({
                     type="text"
                     value={joinForm.passkey}
                     onChange={(e) => setJoinForm(prev => ({ ...prev, passkey: e.target.value.toUpperCase() }))}
-                    className="w-full px-4 py-3 pl-11 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 text-gray-800 font-mono font-semibold tracking-widest transition-all duration-200 placeholder-gray-400"
+                    className="w-full px-3 py-2.5 pl-9 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-gray-800 font-mono font-semibold tracking-widest text-sm transition-all duration-200 placeholder-gray-400"
                     placeholder="A1B2"
                     disabled={connectionStatus === 'connecting'}
                     maxLength={4}
                   />
-                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500 mt-1.5 ml-1">4-character security code</p>
+                <p className="text-xs text-gray-500 mt-1 ml-0.5">4-character security code</p>
               </div>
             </div>
 
@@ -276,16 +283,16 @@ const JoinModal = ({
                 !joinForm.passkey?.trim() || 
                 connectionStatus === 'connecting'
               }
-              className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] disabled:transform-none"
+              className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed text-white rounded-lg transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] disabled:transform-none text-sm"
             >
               {connectionStatus === 'connecting' ? (
                 <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-3"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
                   Joining Room...
                 </div>
               ) : (
                 <div className="flex items-center justify-center">
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                   </svg>
                   Join Interview Room
@@ -294,8 +301,8 @@ const JoinModal = ({
             </button>
 
             {/* Help Text */}
-            <div className="text-center pt-2">
-              <p className="text-sm text-gray-600">
+            <div className="text-center pt-1">
+              <p className="text-xs text-gray-600">
                 Need help? Contact your interviewer for room details.
               </p>
             </div>
@@ -337,7 +344,7 @@ const InterviewRoom: React.FC = () => {
   const [newMessage, setNewMessage] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // Code Editor
+  // Code Editor is here
   const [code, setCode] = useState('// Welcome to the coding interview!\n// Feel free to write your code here\n\nfunction solution() {\n  // Your code here\n}');
   const [language, setLanguage] = useState('javascript');
 
