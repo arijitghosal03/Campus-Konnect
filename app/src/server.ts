@@ -185,6 +185,8 @@ type CustomRequestHandler = (req: CustomRequest, res: Response, next: NextFuncti
 
 // Authentication middleware
 const authenticate: CustomRequestHandler = (req, res, next) => {
+  console.log("Authenticating user");
+  console.log(req.cookies);
   const token = req.cookies.token;
   
   if (!token) {
