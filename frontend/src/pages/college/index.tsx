@@ -550,7 +550,134 @@ const removeUploadedFile = (index: number) => {
     photos: newFiles.map(f => f.name)
   }));
 };
+const renderHomePage = () => (
+  <div className="min-h-screen bg-gradient-to-br from-orange-400 via-yellow-400 to-orange-500">
+    {/* Hero Section */}
+    <div className="relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-6 py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          {/* Left Content */}
+          <div className="space-y-8">
+            <div className="space-y-4">
+              <p className="text-gray-800 font-medium tracking-wide">Let our AI platform</p>
+              <h1 className="text-6xl lg:text-7xl font-bold text-white leading-tight">
+                Rocket
+                <br />
+                <span className="text-gray-900">your business</span>
+              </h1>
+            </div>
+            
+            <div className="space-y-6">
+              <h3 className="text-xl font-semibold text-gray-800">How does it work?</h3>
+              <p className="text-gray-700 text-lg leading-relaxed max-w-md">
+                Everything from small online stores to marketing tools and 
+                analytics. Graphics AI is the all-in-one platform to build a 
+                beautiful presence.
+              </p>
+            </div>
 
+            <div className="flex gap-4">
+              <button className="bg-gray-900 text-white px-8 py-4 rounded-full font-semibold hover:bg-gray-800 transition-all duration-300 transform hover:scale-105">
+                Get Started
+              </button>
+              <button className="border-2 border-gray-800 text-gray-800 px-8 py-4 rounded-full font-semibold hover:bg-gray-800 hover:text-white transition-all duration-300">
+                Learn More
+              </button>
+            </div>
+          </div>
+
+          {/* Right Content - Rocket Container */}
+          <div className="relative flex justify-center lg:justify-end">
+            <div className="relative">
+              {/* Main Rocket Container */}
+              <div className="bg-white/20 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/30">
+                <div className="relative w-80 h-96 flex items-center justify-center">
+                  {/* Rocket Image Placeholder - Replace with actual image */}
+                  <div className="relative">
+                    {/* Rocket Body */}
+                    <div className="w-24 h-40 bg-gradient-to-b from-pink-300 to-orange-300 rounded-full relative mx-auto">
+                      {/* Rocket Window */}
+                      <div className="absolute top-8 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-gray-800 rounded-full border-4 border-cyan-400"></div>
+                      {/* Rocket Fins */}
+                      <div className="absolute -left-2 top-16 w-4 h-12 bg-cyan-400 rounded-l-lg"></div>
+                      <div className="absolute -right-2 top-16 w-4 h-12 bg-cyan-400 rounded-r-lg"></div>
+                    </div>
+                    
+                    {/* Character on Rocket */}
+                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2">
+                      <div className="w-16 h-16 bg-gradient-to-b from-orange-200 to-orange-300 rounded-full relative">
+                        {/* Character Head */}
+                        <div className="w-12 h-12 bg-pink-200 rounded-full mx-auto mt-1 relative">
+                          {/* Goggles */}
+                          <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-8 h-4 bg-cyan-400 rounded-full border-2 border-gray-700"></div>
+                        </div>
+                        {/* Character Body */}
+                        <div className="w-8 h-8 bg-gray-600 rounded-lg mx-auto -mt-2"></div>
+                      </div>
+                    </div>
+                    
+                    {/* Rocket Flames */}
+                    <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2">
+                      <div className="w-12 h-8 bg-gradient-to-b from-orange-400 to-red-500 rounded-b-full"></div>
+                      <div className="w-8 h-6 bg-gradient-to-b from-yellow-400 to-orange-500 rounded-b-full mx-auto -mt-6"></div>
+                    </div>
+                  </div>
+                  
+                  {/* Floating Elements */}
+                  <div className="absolute top-12 right-8 w-4 h-4 bg-cyan-400 rounded-full animate-bounce"></div>
+                  <div className="absolute bottom-20 left-8 w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></div>
+                  <div className="absolute top-1/3 left-12 w-2 h-2 bg-pink-400 rounded-full"></div>
+                  <div className="absolute bottom-1/3 right-12 w-2 h-2 bg-cyan-300 rounded-full"></div>
+                </div>
+              </div>
+              
+              {/* Decorative Elements */}
+              <div className="absolute -top-6 -right-6 w-12 h-12 bg-cyan-400 rounded-full opacity-70"></div>
+              <div className="absolute -bottom-6 -left-6 w-8 h-8 bg-pink-400 rounded-full opacity-60"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Background Decorative Elements */}
+      <div className="absolute top-20 left-10 w-6 h-6 bg-white/30 rounded-full"></div>
+      <div className="absolute top-40 right-20 w-4 h-4 bg-white/40 rounded-full"></div>
+      <div className="absolute bottom-20 left-1/4 w-8 h-8 bg-white/20 rounded-full"></div>
+      <div className="absolute bottom-40 right-1/3 w-5 h-5 bg-white/30 rounded-full"></div>
+    </div>
+
+    {/* Features Section */}
+    <div className="bg-white/10 backdrop-blur-sm py-16">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto">
+              <div className="w-8 h-8 bg-cyan-400 rounded-full"></div>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900">AI-Powered</h3>
+            <p className="text-gray-700">Advanced artificial intelligence to boost your productivity</p>
+          </div>
+          
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto">
+              <div className="w-8 h-8 bg-pink-400 rounded-full"></div>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900">Easy Integration</h3>
+            <p className="text-gray-700">Seamlessly integrate with your existing workflow</p>
+          </div>
+          
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto">
+              <div className="w-8 h-8 bg-yellow-400 rounded-full"></div>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900">Fast Results</h3>
+            <p className="text-gray-700">Get results quickly with our optimized platform</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
   const renderDashboard = () => (
     <div className="space-y-6">
       {/* Hero Banner */}
@@ -988,29 +1115,7 @@ const renderWorkshops = () => (
       case 'workshops': return renderWorkshops();
       case 'ranking': return renderRanking();
       case 'statistics': return renderStatistics();
-      case 'home': return (
-        <div className="bg-white rounded-xl p-6">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">College Information</h3>
-          <div className="space-y-4">
-            <div>
-              <h4 className="font-semibold text-gray-700">Institution Name</h4>
-              <p className="text-gray-600">{collegeInfo.name}</p>
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-700">Established</h4>
-              <p className="text-gray-600">{collegeInfo.established}</p>
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-700">Location</h4>
-              <p className="text-gray-600">{collegeInfo.location}</p>
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-700">Accreditation</h4>
-              <p className="text-gray-600">{collegeInfo.accreditation}</p>
-            </div>
-          </div>
-        </div>
-      );
+      case 'home': return renderHomePage();
       default: return renderDashboard();
     }
   };
@@ -1139,71 +1244,11 @@ const renderWorkshops = () => (
               {renderContent()}
             </div>
 
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Pending Exams */}
-              <div className="bg-white rounded-xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-gray-900">Upcoming Workshops</h3>
-                  <button className="text-blue-600 text-sm font-medium hover:text-blue-700">View All</button>
-                </div>
-                <div className="space-y-4">
-                  {workshops.upcoming.slice(0, 2).map((workshop, index) => (
-                    <div key={index} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-900">{workshop.title}</span>
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          workshop.status === 'approved' ? 'bg-green-100 text-green-800' :
-                          workshop.status === 'declined' ? 'bg-red-100 text-red-800' :
-                          'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {workshop.status}
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-600">{workshop.speaker.name}</p>
-                      <div className="flex gap-2">
-                        <button className="flex-1 text-sm px-3 py-1 border border-gray-300 rounded text-gray-600 hover:bg-gray-50">
-                          View
-                        </button>
-                        <button className="flex-1 text-sm px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">
-                          Manage
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Statistics */}
-              <div className="bg-white rounded-xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-gray-900">Workshop Stats</h3>
-                  <button className="text-blue-600 text-sm font-medium hover:text-blue-700">View All</button>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Total Workshops</span>
-                    <span className="font-semibold">{workshops.upcoming.length + workshops.completed.length}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Pending Approval</span>
-                    <span className="font-semibold text-yellow-600">
-                      {workshops.upcoming.filter(w => w.status === 'pending').length}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Approved</span>
-                    <span className="font-semibold text-green-600">
-                      {workshops.upcoming.filter(w => w.status === 'approved').length}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+         
           </div>
         </main>
       </div>
-
+{/*}
       {/* Workshop Details Modal */}
       {showWorkshopDetails && selectedWorkshop && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
