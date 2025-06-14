@@ -29,9 +29,13 @@ import {
   Camera,
   DollarSign,
   UserCheck,
-  Eye
+  Eye,
+  Plus
 } from 'lucide-react';
+import {Badge} from "@/components/ui/badge";
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Button } from "@/components/ui/button";
 
 type WorkshopSummary = {
   students: number | string;
@@ -1011,40 +1015,94 @@ const renderWorkshops = () => (
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <div className="w-64 bg-white shadow-lg flex flex-col">
-        {/* Logo */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <GraduationCap className="w-5 h-5 text-white" />
+       <div className="min-h-screen bg-gray-50">
+      {/* Header - Full width at the top */}
+      <header className="bg-white/80 backdrop-blur-sm border-b border-white/20 sticky top-0 z-40 w-full">
+        <div className="px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center">
+                <div
+                  className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md m-3 cursor-pointer"
+                  onClick={() => window.location.href = '/'}
+                >
+                  <img
+                    src="/logo.svg"
+                    alt="Campus Konnect Logo"
+                    className="w-16 h-16 object-contain"
+                  />
+                </div>
+
+                <span className="text-2xl font-semibold text-gray-800 tracking-wide">
+                  <span className="font-bold bg-gradient-to-r from-teal-400 to-blue-600 bg-clip-text text-transparent">Campus</span>{' '}
+                  <span className="font-bold text-gray-900">Konnect</span>
+                </span>
+              </div>
+              <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+                College Portal
+              </Badge>
             </div>
-            <span className="text-xl font-bold text-blue-600">GCELT Portal</span>
+              
+            <div className="flex items-center space-x-3">
+              <nav className="flex items-center space-x-4">
+                <a 
+                  href="/posts"
+                  className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 text-blue-700 hover:text-blue-800 font-medium transition-all duration-300 shadow-sm hover:shadow-md border border-blue-100 hover:border-blue-200 group"
+                >
+                  <svg className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                  </svg>
+                  <span>Posts</span>
+                </a>
+                
+                <button
+                  onClick={() => {
+                    localStorage.removeItem('college');
+                    localStorage.removeItem('student'); 
+                    localStorage.removeItem('company');
+                    window.location.href="/"
+                  }}
+                  className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-gradient-to-r from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100 text-red-600 hover:text-red-700 font-medium transition-all duration-300 shadow-sm hover:shadow-md border border-red-100 hover:border-red-200 group"
+                >
+                  <svg className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/>
+                  </svg>
+                  <span>Logout</span>
+                </button>
+              </nav>
+            
+              
+            </div>
           </div>
         </div>
+      </header>
+       
+      <div className="flex">
+        {/* Sidebar */}
+        <div className="w-64 bg-white shadow-lg flex flex-col min-h-[calc(100vh-80px)]">
+          {/* Navigation */}
+          <nav className="flex-1 p-4">
+            <div className="space-y-1">
+              {menuItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
+                      activeTab === item.id
+                        ? 'bg-blue-100 text-blue-700 font-medium'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5" />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-4">
-          <div className="space-y-1">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
-                    activeTab === item.id
-                      ? 'bg-blue-100 text-blue-700 font-medium'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  {item.label}
-                </button>
-              );
-            })}
-          </div>
+      
 
           <div className="mt-8 pt-4 border-t border-gray-200">
             <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
@@ -1070,41 +1128,7 @@ const renderWorkshops = () => (
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b border-gray-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 capitalize">{activeTab}</h1>
-              <p className="text-gray-600">Manage your academic portal</p>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Search for exam"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              
-              <button className="relative p-2 text-gray-600 hover:text-gray-900">
-                <Bell className="w-6 h-6" />
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
-              </button>
-              
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
-                <div>
-                  <div className="text-sm font-medium text-gray-900">Profile</div>
-                  <div className="text-xs text-gray-600">Admin User</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
+    
 
         {/* Content Area */}
         <main className="flex-1 p-6">
@@ -1528,6 +1552,7 @@ const renderWorkshops = () => (
         </div>
        
       )}
+       </div>
        </div>
 )}
 export default CollegeDashboard;

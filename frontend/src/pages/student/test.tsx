@@ -15,6 +15,7 @@ import {
   Mic,
   Monitor,
   CheckCircle,
+  ArrowLeft,
   AlertTriangle,
   User,
   Key,
@@ -97,27 +98,47 @@ Good luck!`
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center space-x-3">
-              <div className="bg-blue-600 rounded-lg p-2">
-                <Monitor className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  ExamFlow
-                </h1>
-                <p className="text-sm text-gray-600">Student Portal</p>
-              </div>
-            </Link>
+       <header className="border-b bg-white/80 backdrop-blur-sm">
+      <div className="container mx-auto">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center justify-start">
+            <div
+              className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md m-3 cursor-pointer"
+              onClick={() => window.location.href = '/'}
+            >
+              <img
+                src="/logo.svg"
+                alt="Campus Konnect Logo"
+                className="w-16 h-16 object-contain"
+              />
+            </div>
+
+            <span className="text-2xl font-semibold text-gray-800 tracking-wide">
+              <span className="font-bold bg-gradient-to-r from-teal-400 to-blue-600 bg-clip-text text-transparent">Campus</span>{' '}
+              <span className="font-bold text-gray-900">Konnect</span>
+            </span>
+          </div>
+          
+          <div className="flex items-center space-x-4">
             <Badge variant="outline" className="px-4 py-2">
               <BookOpen className="h-4 w-4 mr-2" />
               Assessment Portal
             </Badge>
+            
+            <a href="/student">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex items-center space-x-2 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span>Back</span>
+              </Button>
+            </a>
           </div>
         </div>
-      </header>
+      </div>
+    </header>
 
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">

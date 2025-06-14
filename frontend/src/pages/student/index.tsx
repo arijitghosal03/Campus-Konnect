@@ -1,11 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState,useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
 import { 
   Bell, BookOpen, GraduationCap, Trophy, ThumbsUp, Calendar, PenSquare, 
   User, LogOut, MessageCircle, Edit3, BarChart3, Briefcase, FileText,
   Upload, Save, X, Plus, Star, Award, MapPin, Phone, Mail, 
   School, Users, TrendingUp, Clock, CheckCircle, Eye, Search,
-  ChevronRight, Home, Settings
+  ChevronRight, Home, Settings, 
+  Loader2, 
+  AlertTriangle,
+  Download,
+  Trash2,
+  ZoomIn,
+  ZoomOut,
+  RotateCw,
+  XCircle
 } from 'lucide-react';
 
 // Interfaces (keeping original)
@@ -53,6 +64,22 @@ interface IStudent {
     date: string;
   }>;
 }
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+// Types for the analysis results
+interface ResumeInsight {
+  title: string;
+  description: string;
+}
+
+interface ResumeAnalysis {
+  goodPoints: ResumeInsight[];
+  badPoints: ResumeInsight[];
+  overallScore?: number;
+}
+
+// Initialize Gemini API
+const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || '');
 
 const Student = () => {
   const [student, setStudent] = useState<IStudent | null>(null);
@@ -63,7 +90,160 @@ const Student = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [newPost, setNewPost] = useState({ title: '', content: '', description: '' });
   const [showNewPostModal, setShowNewPostModal] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [analysis, setAnalysis] = useState<ResumeAnalysis | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [showPdfViewer, setShowPdfViewer] = useState(false);
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Convert file to text
+  const fileToText = async (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = (event) => {
+        const text = event.target?.result as string;
+        resolve(text);
+      };
+      
+      reader.onerror = () => {
+        reject(new Error('Failed to read file'));
+      };
+      
+      reader.readAsText(file);
+    });
+  };
+
+  // Analyze resume with Gemini API
+  const analyzeResumeWithGemini = async (file: File): Promise<ResumeAnalysis> => {
+    try {
+      const fileText = await fileToText(file);
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+      const prompt = `
+        Analyze the following resume and provide exactly 10 insights: 5 good points and 5 areas for improvement.
+        
+        Please format your response as a JSON object with the following structure:
+        {
+          "goodPoints": [
+            {"title": "Strength Title", "description": "Detailed explanation of what's good"},
+            {"title": "Strength Title", "description": "Detailed explanation of what's good"},
+            {"title": "Strength Title", "description": "Detailed explanation of what's good"},
+            {"title": "Strength Title", "description": "Detailed explanation of what's good"},
+            {"title": "Strength Title", "description": "Detailed explanation of what's good"}
+          ],
+          "badPoints": [
+            {"title": "Area for Improvement", "description": "Detailed explanation and suggestion"},
+            {"title": "Area for Improvement", "description": "Detailed explanation and suggestion"},
+            {"title": "Area for Improvement", "description": "Detailed explanation and suggestion"},
+            {"title": "Area for Improvement", "description": "Detailed explanation and suggestion"},
+            {"title": "Area for Improvement", "description": "Detailed explanation and suggestion"}
+          ],
+          "overallScore": 75
+        }
+
+        Focus on: content quality, formatting, skills presentation, experience descriptions, education details, contact information, ATS optimization, achievements, professional summary, and readability.
+
+        Resume content:
+        ${fileText}
+      `;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      // Extract and parse JSON
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      const jsonString = jsonMatch ? jsonMatch[0] : text;
+      const analysisResult: ResumeAnalysis = JSON.parse(jsonString);
+
+      if (!analysisResult.goodPoints || !analysisResult.badPoints || 
+          analysisResult.goodPoints.length !== 5 || analysisResult.badPoints.length !== 5) {
+        throw new Error('Invalid response structure from Gemini API');
+      }
+
+      return analysisResult;
+    } catch (error) {
+      console.error('Error analyzing resume:', error);
+      throw new Error('Failed to analyze resume. Please try again.');
+    }
+  };
+
+  // Handle file upload
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type - now including PDF
+    const allowedTypes = [
+      'text/plain',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/pdf'
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      setError('Please upload a valid document file (TXT, DOC, DOCX, or PDF)');
+      return;
+    }
+
+    // Validate file size (10MB limit for PDFs)
+    if (file.size > 10 * 1024 * 1024) {
+      setError('File size must be less than 10MB');
+      return;
+    }
+
+    setUploadedFile(file);
+    setError(null);
+    
+    // Create URL for file preview
+    const url = URL.createObjectURL(file);
+    setFileUrl(url);
+
+    // Only analyze non-PDF files automatically
+    if (file.type !== 'application/pdf') {
+      setLoading(true);
+      try {
+        const analysisResult = await analyzeResumeWithGemini(file);
+        setAnalysis(analysisResult);
+        setShowAnalysis(true);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred during analysis');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  // Remove uploaded file
+  const removeFile = () => {
+    setUploadedFile(null);
+    setAnalysis(null);
+    setShowAnalysis(false);
+    setShowPdfViewer(false);
+    setError(null);
+    setZoom(1);
+    if (fileUrl) {
+      URL.revokeObjectURL(fileUrl);
+      setFileUrl(null);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Handle PDF analysis
+  const handleAnalyzePdf = async () => {
+    if (!uploadedFile || uploadedFile.type !== 'application/pdf') return;
+    
+    setLoading(true);
+    setError('PDF analysis is not yet supported. Please upload a TXT, DOC, or DOCX file for AI analysis.');
+    setLoading(false);
+  };
   // Mock logged in user data
   const loggedInUser = {
     name: "SUBHAJIT MONDAL",
@@ -232,8 +412,9 @@ const Student = () => {
       </div>
     </motion.div>
   );
-
-  const ProfileSection = () => (
+     
+       
+      const ProfileSection = () => (
     <motion.div 
       variants={containerVariants}
       initial="hidden"
@@ -810,7 +991,77 @@ onClick={handleAddPost}
       </div>
     </motion.div>
   );
-
+const PdfViewer = () => (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+      onClick={(e) => e.target === e.currentTarget && setShowPdfViewer(false)}
+    >
+      <div className="bg-white rounded-2xl w-11/12 h-5/6 max-w-4xl flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b">
+          <h3 className="text-lg font-semibold text-gray-800">
+            {uploadedFile?.name}
+          </h3>
+          <div className="flex items-center gap-2">
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setZoom(Math.max(0.5, zoom - 0.25))}
+              className="p-2 hover:bg-gray-100 rounded-lg"
+              title="Zoom Out"
+            >
+              <ZoomOut className="w-5 h-5" />
+            </motion.button>
+            <span className="text-sm text-gray-600 min-w-16 text-center">
+              {Math.round(zoom * 100)}%
+            </span>
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setZoom(Math.min(3, zoom + 0.25))}
+              className="p-2 hover:bg-gray-100 rounded-lg"
+              title="Zoom In"
+            >
+              <ZoomIn className="w-5 h-5" />
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setShowPdfViewer(false)}
+              className="p-2 hover:bg-gray-100 rounded-lg"
+              title="Close"
+            >
+              <X className="w-5 h-5" />
+            </motion.button>
+          </div>
+        </div>
+        
+        {/* Content */}
+        <div className="flex-1 overflow-auto p-4 bg-gray-100">
+          {fileUrl && uploadedFile?.type === 'application/pdf' ? (
+            <div className="h-full flex justify-center">
+              <iframe
+                src={fileUrl}
+                className="w-full h-full border-0 rounded-lg"
+                style={{ transform: `scale(${zoom})`, transformOrigin: 'top center' }}
+                title="Resume PDF"
+              />
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center text-gray-500">
+                <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <p>Preview not available for this file type</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
   const ResumeSection = () => (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -818,7 +1069,9 @@ onClick={handleAddPost}
       className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100"
     >
       <h2 className="text-2xl font-bold text-gray-800 mb-6">Resume & Documents</h2>
-      <div className="space-y-4">
+      
+      <div className="space-y-6">
+        {/* Upload Section */}
         <div className="bg-gray-50 rounded-2xl p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
@@ -826,32 +1079,199 @@ onClick={handleAddPost}
                 <FileText className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-800">Current Resume</h3>
-                <p className="text-gray-600 text-sm">Last updated: {new Date().toLocaleDateString()}</p>
+                <h3 className="text-lg font-bold text-gray-800">
+                  {uploadedFile ? uploadedFile.name : 'Upload Resume'}
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  {uploadedFile 
+                    ? `Uploaded: ${new Date().toLocaleDateString()}` 
+                    : 'Upload your resume for AI-powered analysis'
+                  }
+                </p>
               </div>
             </div>
+            
+            
             <div className="flex gap-3">
+              {uploadedFile && (
+                <>
+              
+                  {uploadedFile.type === 'application/pdf' ? (
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleAnalyzePdf}
+                      disabled={loading}
+                      className="bg-blue-500 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {loading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Star className="w-4 h-4" />
+                      )}
+                      Analyze PDF
+                    </motion.button>
+                  ) : (
+                    analysis && (
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setShowAnalysis(!showAnalysis)}
+                        className="bg-blue-500 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2"
+                      >
+                        <Star className="w-4 h-4" /> {showAnalysis ? 'Hide' : 'Show'} Analysis
+                      </motion.button>
+                    )
+                  )}
+                  
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={removeFile}
+                    className="bg-red-500 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2"
+                  >
+                    <Trash2 className="w-4 h-4" /> Remove
+                  </motion.button>
+                </>
+              )}
+              
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".txt,.doc,.docx,.pdf"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="bg-blue-500 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={loading}
+                className="bg-green-500 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2 disabled:opacity-50"
               >
-                <Eye className="w-4 h-4" /> View
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-green-500 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2"
-              >
-                <Upload className="w-4 h-4" /> Update
+                {loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Upload className="w-4 h-4" />
+                )}
+                {uploadedFile ? 'Update' : 'Upload'}
               </motion.button>
             </div>
           </div>
+
+          {/* Error Message */}
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3"
+            >
+              <XCircle className="w-5 h-5 text-red-500" />
+              <p className="text-red-700 text-sm">{error}</p>
+            </motion.div>
+          )}
+
+          {/* Loading State */}
+          {loading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center gap-3"
+            >
+              <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+              <p className="text-blue-700 text-sm">Analyzing your resume with AI...</p>
+            </motion.div>
+          )}
         </div>
+
+        {/* Analysis Results */}
+        <AnimatePresence>
+          {showAnalysis && analysis && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="space-y-6"
+            >
+              {/* Overall Score */}
+              {analysis.overallScore && (
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-800">Overall Score</h3>
+                      <p className="text-gray-600">Based on comprehensive analysis</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-3xl font-bold text-purple-600">
+                        {analysis.overallScore}/100
+                      </div>
+                      <div className="flex items-center gap-1 mt-1">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-4 h-4 ${
+                              i < Math.floor(analysis.overallScore! / 20)
+                                ? 'text-yellow-400 fill-current'
+                                : 'text-gray-300'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Good Points */}
+              <div className="bg-green-50 rounded-2xl p-6">
+                <h3 className="text-xl font-bold text-green-800 mb-4 flex items-center gap-2">
+                  <CheckCircle className="w-6 h-6" />
+                  Strengths ({analysis.goodPoints.length})
+                </h3>
+                <div className="space-y-4">
+                  {analysis.goodPoints.map((point, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="bg-white rounded-xl p-4 border border-green-200"
+                    >
+                      <h4 className="font-semibold text-green-800 mb-2">{point.title}</h4>
+                      <p className="text-green-700 text-sm">{point.description}</p>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Areas for Improvement */}
+              <div className="bg-orange-50 rounded-2xl p-6">
+                <h3 className="text-xl font-bold text-orange-800 mb-4 flex items-center gap-2">
+                  <AlertTriangle className="w-6 h-6" />
+                  Areas for Improvement ({analysis.badPoints.length})
+                </h3>
+                <div className="space-y-4">
+                  {analysis.badPoints.map((point, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="bg-white rounded-xl p-4 border border-orange-200"
+                    >
+                      <h4 className="font-semibold text-orange-800 mb-2">{point.title}</h4>
+                      <p className="text-orange-700 text-sm">{point.description}</p>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.div>
   );
-
   const SettingsSection = () => (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -927,6 +1347,76 @@ onClick={handleAddPost}
 
   return (
     <div className="min-h-screen bg-gray-50">
+        <header className="bg-white/80 backdrop-blur-sm border-b border-white/20 sticky top-0 z-40">
+        <div className="px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+                <div className="flex items-center">
+                    <div
+                      className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md m-3 cursor-pointer"
+                      onClick={() => window.location.href = '/'}
+                    >
+                      <img
+                        src="/logo.svg"
+                        alt="Campus Konnect Logo"
+                        className="w-16 h-16 object-contain"
+                      />
+                    </div>
+      
+                    <span className="text-2xl font-semibold text-gray-800 tracking-wide">
+                      <span className="font-bold bg-gradient-to-r from-teal-400 to-blue-600 bg-clip-text text-transparent">Campus</span>{' '}
+                      <span className="font-bold text-gray-900">Konnect</span>
+                    </span>
+                  </div>
+              <Badge className="bg-green-100 text-green-800 border-green-200">
+               Student Portal
+              </Badge>
+            </div>
+              
+            <div className="flex items-center space-x-3">
+                <nav className="flex items-center space-x-4">
+              <a 
+                href="/posts"
+                className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 text-blue-700 hover:text-blue-800 font-medium transition-all duration-300 shadow-sm hover:shadow-md border border-blue-100 hover:border-blue-200 group"
+              >
+                <svg className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                </svg>
+                <span>Posts</span>
+              </a>
+              
+              <button
+                onClick={() => {
+                  localStorage.removeItem('college');
+                  localStorage.removeItem('student'); 
+                  localStorage.removeItem('company');
+                  window.location.href="/"
+                }}
+                className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-gradient-to-r from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100 text-red-600 hover:text-red-700 font-medium transition-all duration-300 shadow-sm hover:shadow-md border border-red-100 hover:border-red-200 group"
+              >
+                <svg className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/>
+                </svg>
+                <span>Logout</span>
+              </button>
+            </nav>
+               <Link href="/interview">
+              <Button variant="outline" size="sm" className="hover:bg-blue-50">
+                <Settings className="h-4 w-4 mr-2" />
+                Interview Room
+              </Button>
+              </Link>
+              <Link href="/student/test">
+                <Button size="sm" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Join Test
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </header>
+
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex gap-8">
           <div className="w-64 flex-shrink-0">

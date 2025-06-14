@@ -571,7 +571,7 @@ const Home: React.FC = () => {
                           router.push('/college');
                           break;
                         case 'company':
-                          router.push('/company/dashboard');
+                          router.push('/company');
                           break;
                         default:
                           router.push('/');
