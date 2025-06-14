@@ -314,7 +314,14 @@ const Student = () => {
       //   setEditData(mockStudentData);
       //   setIsLoading(false);
       // }, 1500);
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/student/profile`).then((res) => {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/student/profile`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      }).then((res) => {
         return res.json();
       }).then((data) => {
         console.log("Student data", data);
