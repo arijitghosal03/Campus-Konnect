@@ -314,7 +314,7 @@ const Student = () => {
       //   setEditData(mockStudentData);
       //   setIsLoading(false);
       // }, 1500);
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/student/profile`, {
+      await fetch(`/api/student/profile`, {
         method: 'GET',
         credentials: 'include',
         headers: {
