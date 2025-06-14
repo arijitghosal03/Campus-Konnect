@@ -551,127 +551,148 @@ const removeUploadedFile = (index: number) => {
   }));
 };
 const renderHomePage = () => (
-  <div className="min-h-screen bg-gradient-to-br from-orange-400 via-yellow-400 to-orange-500">
-    {/* Hero Section */}
-    <div className="relative overflow-hidden">
-      <div className="max-w-7xl mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          {/* Left Content */}
-          <div className="space-y-8">
-            <div className="space-y-4">
-              <p className="text-gray-800 font-medium tracking-wide">Let our AI platform</p>
-              <h1 className="text-6xl lg:text-7xl font-bold text-white leading-tight">
-                Rocket
-                <br />
-                <span className="text-gray-900">your business</span>
-              </h1>
-            </div>
+  <div className="min-h-screen bg-gray-50 py-12 px-6">
+    <div className="max-w-7xl mx-auto">
+      {/* Main College Card - Minimalist & Spacious */}
+      <div className="relative bg-slate-900 rounded-3xl overflow-hidden shadow-xl -mt-16">
+        
+        {/* Subtle Gradient Background */}
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 opacity-80"></div>
+          <div className="absolute top-0 left-0 w-1/3 h-full bg-gradient-to-r from-blue-800/20 to-transparent"></div>
+          <div className="absolute bottom-0 right-0 w-1/3 h-full bg-gradient-to-l from-cyan-800/20 to-transparent"></div>
+        </div>
+
+        {/* Content Container */}
+        <div className="relative z-10 p-16">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-16 items-center min-h-[500px]">
             
-            <div className="space-y-6">
-              <h3 className="text-xl font-semibold text-gray-800">How does it work?</h3>
-              <p className="text-gray-700 text-lg leading-relaxed max-w-md">
-                Everything from small online stores to marketing tools and 
-                analytics. Graphics AI is the all-in-one platform to build a 
-                beautiful presence.
-              </p>
-            </div>
+            {/* Left Content Section - Takes 3/5 of the space */}
+            <div className="lg:col-span-3 space-y-12">
+              
+              {/* Header Section */}
+              <div className="space-y-6">
+                <div className="inline-block px-4 py-2 bg-blue-500/20 rounded-full border border-blue-400/30">
+                  <span className="text-blue-300 text-sm font-medium">Excellence Since 1860</span>
+                </div>
+                
+                <h1 className="text-2xl lg:text-3xl font-bold text-white leading-tight">
+                  St. Xavier's
+                  <br />
+                  <span className="bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
+                    College
+                  </span>
+                </h1>
+                
+                <p className="text-sm text-blue-100 leading-relaxed max-w-2xl">
+                  Empowering minds through innovative education, fostering leadership, 
+                  and building tomorrow's changemakers in a nurturing academic environment.
+                </p>
+              </div>
 
-            <div className="flex gap-4">
-              <button className="bg-gray-900 text-white px-8 py-4 rounded-full font-semibold hover:bg-gray-800 transition-all duration-300 transform hover:scale-105">
-                Get Started
-              </button>
-              <button className="border-2 border-gray-800 text-gray-800 px-8 py-4 rounded-full font-semibold hover:bg-gray-800 hover:text-white transition-all duration-300">
-                Learn More
-              </button>
-            </div>
-          </div>
-
-          {/* Right Content - Rocket Container */}
-          <div className="relative flex justify-center lg:justify-end">
-            <div className="relative">
-              {/* Main Rocket Container */}
-              <div className="bg-white/20 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/30">
-                <div className="relative w-80 h-96 flex items-center justify-center">
-                  {/* Rocket Image Placeholder - Replace with actual image */}
-                  <div className="relative">
-                    {/* Rocket Body */}
-                    <div className="w-24 h-40 bg-gradient-to-b from-pink-300 to-orange-300 rounded-full relative mx-auto">
-                      {/* Rocket Window */}
-                      <div className="absolute top-8 left-1/2 transform -translate-x-1/2 w-8 h-8 bg-gray-800 rounded-full border-4 border-cyan-400"></div>
-                      {/* Rocket Fins */}
-                      <div className="absolute -left-2 top-16 w-4 h-12 bg-cyan-400 rounded-l-lg"></div>
-                      <div className="absolute -right-2 top-16 w-4 h-12 bg-cyan-400 rounded-r-lg"></div>
-                    </div>
-                    
-                    {/* Character on Rocket */}
-                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2">
-                      <div className="w-16 h-16 bg-gradient-to-b from-orange-200 to-orange-300 rounded-full relative">
-                        {/* Character Head */}
-                        <div className="w-12 h-12 bg-pink-200 rounded-full mx-auto mt-1 relative">
-                          {/* Goggles */}
-                          <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-8 h-4 bg-cyan-400 rounded-full border-2 border-gray-700"></div>
-                        </div>
-                        {/* Character Body */}
-                        <div className="w-8 h-8 bg-gray-600 rounded-lg mx-auto -mt-2"></div>
-                      </div>
-                    </div>
-                    
-                    {/* Rocket Flames */}
-                    <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2">
-                      <div className="w-12 h-8 bg-gradient-to-b from-orange-400 to-red-500 rounded-b-full"></div>
-                      <div className="w-8 h-6 bg-gradient-to-b from-yellow-400 to-orange-500 rounded-b-full mx-auto -mt-6"></div>
-                    </div>
-                  </div>
-                  
-                  {/* Floating Elements */}
-                  <div className="absolute top-12 right-8 w-4 h-4 bg-cyan-400 rounded-full animate-bounce"></div>
-                  <div className="absolute bottom-20 left-8 w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></div>
-                  <div className="absolute top-1/3 left-12 w-2 h-2 bg-pink-400 rounded-full"></div>
-                  <div className="absolute bottom-1/3 right-12 w-2 h-2 bg-cyan-300 rounded-full"></div>
+              {/* Stats Section */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div className="text-center space-y-2">
+                  <div className="text-lg font-bold text-white">15K+</div>
+                  <div className="text-blue-300 text-sm">Students</div>
+                </div>
+                <div className="text-center space-y-2">
+                  <div className="text-lg font-bold text-white">50+</div>
+                  <div className="text-blue-300 text-sm">Departments</div>
+                </div>
+                <div className="text-center space-y-2">
+                  <div className="text-lg font-bold text-white">95%</div>
+                  <div className="text-blue-300 text-sm">Placement</div>
+                </div>
+                <div className="text-center space-y-2">
+                  <div className="text-lg font-bold text-white">A+</div>
+                  <div className="text-blue-300 text-sm">NAAC Grade</div>
                 </div>
               </div>
-              
-              {/* Decorative Elements */}
-              <div className="absolute -top-6 -right-6 w-12 h-12 bg-cyan-400 rounded-full opacity-70"></div>
-              <div className="absolute -bottom-6 -left-6 w-8 h-8 bg-pink-400 rounded-full opacity-60"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Background Decorative Elements */}
-      <div className="absolute top-20 left-10 w-6 h-6 bg-white/30 rounded-full"></div>
-      <div className="absolute top-40 right-20 w-4 h-4 bg-white/40 rounded-full"></div>
-      <div className="absolute bottom-20 left-1/4 w-8 h-8 bg-white/20 rounded-full"></div>
-      <div className="absolute bottom-40 right-1/3 w-5 h-5 bg-white/30 rounded-full"></div>
-    </div>
 
-    {/* Features Section */}
-    <div className="bg-white/10 backdrop-blur-sm py-16">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="text-center space-y-4">
-            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto">
-              <div className="w-8 h-8 bg-cyan-400 rounded-full"></div>
+              {/* Features Section */}
+              <div className="space-y-6">
+                <h3 className="text-sm font-semibold text-white">Why Choose Us</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-3 h-3 bg-cyan-400 rounded-full mt-2 flex-shrink-0"></div>
+                    <div>
+                      <h4 className="font-medium text-white">Academic Excellence</h4>
+                      <p className="text-blue-200 text-sm">World-class faculty and cutting-edge curriculum</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <div className="w-3 h-3 bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
+                    <div>
+                      <h4 className="font-medium text-white">Industry Connect</h4>
+                      <p className="text-blue-200 text-sm">Strong partnerships with leading organizations</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <div className="w-3 h-3 bg-purple-400 rounded-full mt-2 flex-shrink-0"></div>
+                    <div>
+                      <h4 className="font-medium text-white">Research Focus</h4>
+                      <p className="text-blue-200 text-sm">Innovation-driven learning environment</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <div className="w-3 h-3 bg-yellow-400 rounded-full mt-2 flex-shrink-0"></div>
+                    <div>
+                      <h4 className="font-medium text-white">Global Exposure</h4>
+                      <p className="text-blue-200 text-sm">International exchange programs</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Detail Information */}
+              <div className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <p className="text-blue-200 text-xs">
+                    <span className="font-medium text-white">Admissions Open:</span> Applications for 2025-26 academic year now being accepted
+                  </p>
+                  <p className="text-blue-200 text-xs">
+                    <span className="font-medium text-white">Campus Address:</span> 30 Mother Teresa Sarani, Kolkata, West Bengal 700016
+                  </p>
+                  <p className="text-blue-200 text-xs">
+                    <span className="font-medium text-white">Contact:</span> +91-33-2217-4475 | admissions@sxccal.edu
+                  </p>
+                  <p className="text-blue-200 text-xs">
+                    <span className="font-medium text-white">Visit Hours:</span> Monday to Friday, 9:00 AM - 5:00 PM
+                  </p>
+                </div>
+              </div>
             </div>
-            <h3 className="text-xl font-bold text-gray-900">AI-Powered</h3>
-            <p className="text-gray-700">Advanced artificial intelligence to boost your productivity</p>
-          </div>
-          
-          <div className="text-center space-y-4">
-            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto">
-              <div className="w-8 h-8 bg-pink-400 rounded-full"></div>
+
+            {/* Right Image Section - Takes 2/5 of the space */}
+            <div className="lg:col-span-2 relative flex items-center justify-center">
+              <div className="relative w-full h-full min-h-[500px] flex items-center justify-center">
+                
+                {/* Irregular Gradient Background */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  {/* Multiple irregular shapes for complex background */}
+                  <div className="absolute w-80 h-80 bg-gradient-to-br from-orange-500/30 to-red-500/20 rounded-full blur-2xl transform -rotate-12 -translate-x-8"></div>
+                  <div className="absolute w-64 h-96 bg-gradient-to-tr from-purple-500/25 to-pink-500/20 rounded-full blur-3xl transform rotate-45 translate-x-12 translate-y-8"></div>
+                  <div className="absolute w-72 h-60 bg-gradient-to-bl from-blue-500/20 to-cyan-500/25 rounded-full blur-2xl transform -rotate-30 translate-y-16"></div>
+                  <div className="absolute w-56 h-80 bg-gradient-to-tl from-yellow-500/20 to-orange-500/15 rounded-full blur-3xl transform rotate-60 -translate-x-16 -translate-y-8"></div>
+                </div>
+
+                {/* Large PNG Image - Extends beyond background */}
+                <div className="relative z-10 w-full h-full flex items-center justify-center -translate-y-28 -translate-x-2">
+                  <img 
+                    src="college.png" 
+                    alt="St. Xavier's College Building" 
+                    className="w-full max-w-lg h-auto object-contain drop-shadow-2xl transform scale-[1.5]"
+                
+                  />
+                </div>
+
+                {/* Additional decorative elements */}
+                <div className="absolute top-8 right-8 w-4 h-4 bg-cyan-400 rounded-full opacity-80"></div>
+                <div className="absolute bottom-12 left-12 w-6 h-6 bg-yellow-400 rounded-full opacity-60"></div>
+                <div className="absolute top-1/3 left-8 w-3 h-3 bg-green-400 rounded-full opacity-70"></div>
+              </div>
             </div>
-            <h3 className="text-xl font-bold text-gray-900">Easy Integration</h3>
-            <p className="text-gray-700">Seamlessly integrate with your existing workflow</p>
-          </div>
-          
-          <div className="text-center space-y-4">
-            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto">
-              <div className="w-8 h-8 bg-yellow-400 rounded-full"></div>
-            </div>
-            <h3 className="text-xl font-bold text-gray-900">Fast Results</h3>
-            <p className="text-gray-700">Get results quickly with our optimized platform</p>
           </div>
         </div>
       </div>
@@ -1233,14 +1254,12 @@ const renderWorkshops = () => (
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-    
-
+      <div className="flex-1 flex flex-row">
         {/* Content Area */}
         <main className="flex-1 p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="grid grid-rows-1 lg:grid-rows-6 gap-6">
             {/* Main Content */}
-            <div className="lg:col-span-3">
+            <div className="lg:row-span-4">
               {renderContent()}
             </div>
 
