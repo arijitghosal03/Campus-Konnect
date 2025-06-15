@@ -1712,6 +1712,7 @@ app.get('/api/job-postings/search', async (req: Request, res: Response) => {
     });
   }
 });
+//CHATBOT backend
 
 // Start server
 async function startServer() {
