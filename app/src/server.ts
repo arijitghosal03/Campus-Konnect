@@ -822,45 +822,29 @@ app.put('/student/profile', authenticate, authorize(['student']), (async (req: C
   }
 }));
 
-
-app.post('/college/students', authenticate, authorize(['college']), (async (req: CustomRequest, res: Response) => {
-  try {
-    const studentData = req.body;
-    
-    const hashedPassword = await bcrypt.hash(studentData.password || 'student123', 10);
-    const user = new User({
-      username: studentData.username || studentData.studentId,
-      password: hashedPassword,
-      role: 'student',
-      email: studentData.email
-    });
-    await user.save();
-
-    const studentProfile = new Student({
-      ...studentData,
-      userId: user._id
-    });
-    await studentProfile.save();  
-
-    res.status(201).json({ 
-      message: 'Student added successfully', 
-      student: studentProfile 
-    });
-  } catch (error: any) {
-    console.error('Error adding student:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-}) as CustomRequestHandler);
-
+// Backend route to fetch all students with college authentication
 app.get('/college/students', authenticate, authorize(['college']), (async (req: CustomRequest, res: Response) => {
   try {
-    const students = await Student.find({}).populate('userId', 'username email');
-    res.json(students);
+    console.log('College user:', req.user);
+    
+    // Fetch all students from the database
+    const students = await Student.find({}).select('-password'); // Exclude password field
+    
+    if (!students || students.length === 0) {
+      res.status(404).json({ message: 'No students found' });
+      return;
+    }
+    
+    res.json({
+      message: 'Students fetched successfully',
+      count: students.length,
+      students: students
+    });
   } catch (error: any) {
     console.error('Error fetching students:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error while fetching students' });
   }
-}));
+}) as CustomRequestHandler);
 
 // COMPANY ROUTES
 app.get('/company', authenticate, authorize(['company']), (async (req: CustomRequest, res: Response) => {

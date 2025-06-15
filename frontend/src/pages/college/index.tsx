@@ -30,7 +30,10 @@ import {
   DollarSign,
   UserCheck,
   Eye,
-  Plus
+  Plus,
+  Code,
+  AlertCircle,
+  ArrowRight
 } from 'lucide-react';
 import {Badge} from "@/components/ui/badge";
 import { useRouter } from 'next/navigation';
@@ -105,13 +108,6 @@ const CollegeDashboard = () => {
     departments: ["Computer Science", "Information Technology", "Leather Technology"]
   };
 
-  const students = [
-    { id: 1, name: "Arijit Ghosal", department: "Information Technology", year: "4th", gpa: 8.7, status: "Active" },
-    { id: 2, name: "Ramik Mukherjee", department: "Information Technology", year: "4th", gpa: 8.9, status: "Active" },
-    { id: 3, name: "Sayantan Dam", department: "Information Technology", year: "4th", gpa: 9.4, status: "Active" },
-    { id: 4, name: "Shehenaz Islam", department: "Information Technology", year: "4th", gpa: 8.5, status: "Active" },
-    { id: 5, name: "SK Nasir Hosen", department: "Information Technology", year: "4th", gpa: 8.5, status: "Active" },
-  ];
 
   const companies = [
     { 
@@ -313,7 +309,7 @@ const [workshops, setWorkshops] = useState<{ upcoming: Workshop[], completed: Wo
   const menuItems = [
     { id: 'home', label: 'Home Page', icon: Home },
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-    { id: 'training', label: 'Training', icon: BookOpen },
+    { id: 'students', label: 'Students', icon: BookOpen },
     { id: 'workshops', label: 'Workshops', icon: Calendar },
     { id: 'ranking', label: 'My Ranking', icon: Trophy },
     { id: 'statistics', label: 'Statistics', icon: TrendingUp },
@@ -435,6 +431,68 @@ const handleSaveWorkshop = async () => {
     alert('Failed to update workshop details. Please try again.');
   }
 };
+interface Student {
+  _id: string;
+  name: string;
+  roll_number: string;
+  college: string;
+  degree: string;
+  stream: string;
+  semester: number;
+  enrollment_year: number;
+  passout_year: number;
+  subjects: string[];
+  backlogs: number;
+  average_cgpa: number;
+  status: string;
+  total_marks: number;
+  pending_fees: number;
+  attendance: number;
+  dob: string;
+  mobile: string;
+  email: string;
+  city: string;
+  gender: string;
+  profile_image: string;
+  resume: string[];
+  skills: string[];
+  projects: string[];
+  posts: Array<{
+    title: string;
+    content: string;
+    date: string;
+    description: string;
+  }>;
+  certificates: Array<{
+    title: string;
+    description: string;
+    issue_date: string;
+    credential_id: string;
+  }>;
+  internships: Array<{
+    title: string;
+    description: string;
+    date: string;
+  }>;
+}
+
+
+
+interface CollegeStream {
+  departments: string[];
+}
+
+  const [students, setStudents] = useState<Student[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [showStudentDetail, setShowStudentDetail] = useState(false);
+
+  // Mock college info - replace with your actual data
+  const collegeStream: CollegeStream = {
+    departments: ['Computer Science', 'Leather Technology', 'Information Technology']
+  };
 
 const handleSaveSummary = async () => {
   if (!selectedWorkshop) return;
@@ -511,7 +569,56 @@ const handleSaveSummary = async () => {
     }
   }
 };
+const fetchStudentsData = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/college/students', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        console.log("Students data", data);
+        setStudents(data.students || []);
+      } else {
+        console.error('Error fetching students:', data.message);
+      }
+    } catch (err) {
+      console.error('Fetch error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
+    fetchStudentsData();
+  }, []);
+
+  // Get students by department
+  const getStudentsByDepartment = (department: string) => {
+    return students.filter(student => 
+      student.stream.toLowerCase().includes(department.toLowerCase()) || 
+      department.toLowerCase().includes(student.stream.toLowerCase())
+    );
+  };
+
+  // Handle department selection
+  const handleDepartmentClick = (department: string) => {
+    setSelectedDepartment(department);
+    setShowModal(true);
+  };
+
+  // Handle student selection
+  const handleStudentClick = (student: Student) => {
+    setSelectedStudent(student);
+    setShowStudentDetail(true);
+  };
 const handleEditWorkshop = (workshop: Workshop) => {
   setEditingWorkshop({ ...workshop });
   setSelectedWorkshop(workshop);
@@ -573,20 +680,19 @@ const renderHomePage = () => (
               {/* Header Section */}
               <div className="space-y-6">
                 <div className="inline-block px-4 py-2 bg-blue-500/20 rounded-full border border-blue-400/30">
-                  <span className="text-blue-300 text-sm font-medium">Excellence Since 1860</span>
+                  <span className="text-blue-300 text-sm font-medium">Excellence Since 1919</span>
                 </div>
                 
                 <h1 className="text-2xl lg:text-3xl font-bold text-white leading-tight">
-                  St. Xavier's
+                  Government College of
                   <br />
                   <span className="bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
-                    College
+                    Engineering and Leather Technology
                   </span>
                 </h1>
                 
                 <p className="text-sm text-blue-100 leading-relaxed max-w-2xl">
-                  Empowering minds through innovative education, fostering leadership, 
-                  and building tomorrow's changemakers in a nurturing academic environment.
+                 Pioneer in the field of education and research on Leather Technology was originally started under the name ‘Calcutta Research Tannery’ in year 1919.
                 </p>
               </div>
 
@@ -597,16 +703,16 @@ const renderHomePage = () => (
                   <div className="text-blue-300 text-sm">Students</div>
                 </div>
                 <div className="text-center space-y-2">
-                  <div className="text-lg font-bold text-white">50+</div>
+                  <div className="text-lg font-bold text-white">3</div>
                   <div className="text-blue-300 text-sm">Departments</div>
                 </div>
                 <div className="text-center space-y-2">
-                  <div className="text-lg font-bold text-white">95%</div>
+                  <div className="text-lg font-bold text-white">85%</div>
                   <div className="text-blue-300 text-sm">Placement</div>
                 </div>
                 <div className="text-center space-y-2">
-                  <div className="text-lg font-bold text-white">A+</div>
-                  <div className="text-blue-300 text-sm">NAAC Grade</div>
+                  <div className="text-lg font-bold text-white">50</div>
+                  <div className="text-blue-300 text-sm">Faculties</div>
                 </div>
               </div>
 
@@ -652,13 +758,13 @@ const renderHomePage = () => (
                     <span className="font-medium text-white">Admissions Open:</span> Applications for 2025-26 academic year now being accepted
                   </p>
                   <p className="text-blue-200 text-xs">
-                    <span className="font-medium text-white">Campus Address:</span> 30 Mother Teresa Sarani, Kolkata, West Bengal 700016
+                    <span className="font-medium text-white">Campus Address:</span> Block - LB 11, Sector-III, Salt Lake, Kolkata-700106, India
                   </p>
                   <p className="text-blue-200 text-xs">
-                    <span className="font-medium text-white">Contact:</span> +91-33-2217-4475 | admissions@sxccal.edu
+                    <span className="font-medium text-white">Contact:</span>  +91 33 23356977 | principal@gcelt.gov.in
                   </p>
                   <p className="text-blue-200 text-xs">
-                    <span className="font-medium text-white">Visit Hours:</span> Monday to Friday, 9:00 AM - 5:00 PM
+                    <span className="font-medium text-white">Visit Hours:</span> Monday to Friday, 9:00 AM   - 5:00 PM
                   </p>
                 </div>
               </div>
@@ -1040,51 +1146,558 @@ const renderWorkshops = () => (
     )}
   </div>
 );
-  const renderTraining = () => (
-    <div className="bg-white rounded-xl p-6">
-      <h3 className="text-xl font-bold text-gray-900 mb-6">Training Programs</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {collegeInfo.departments.map((dept, index) => (
-          <div key={index} className="border border-gray-200 rounded-lg p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <Building2 className="w-8 h-8 text-blue-600" />
-              <h4 className="text-lg font-semibold">{dept}</h4>
+const StudentDetailModal = () => (
+  <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden">
+      {/* Header with gradient background */}
+      
+      {selectedStudent && (
+        <div className="bg-gradient-to-r from-blue-600 to-purple-700 px-8 py-6 text-white">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-full border-4 border-white/20 overflow-hidden bg-white/10">
+              
+                <img
+                  src={selectedStudent.profile_image}
+                  alt={selectedStudent.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = `https://ui-avatars.com/api/?name=${selectedStudent.name}&background=ffffff&color=3b82f6&size=64`;
+                  }}
+                />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold">{selectedStudent.name}</h2>
+                <p className="text-blue-100">Roll No: {selectedStudent.roll_number}</p>
+                <div className="flex items-center gap-3 mt-2">
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    selectedStudent.status === 'Passout' ? 'bg-green-500 text-white' : 
+                    selectedStudent.status === 'Active' ? 'bg-blue-500 text-white' : 
+                    'bg-gray-500 text-white'
+                  }`}>
+                    {selectedStudent.status}
+                  </span>
+                  <span className="text-sm text-blue-100">
+                    {selectedStudent.gender} • {selectedStudent.city}
+                  </span>
+                </div>
+              </div>
             </div>
-            <p className="text-gray-600 mb-4">
-              Comprehensive training program for {dept} students with industry-relevant curriculum.
-            </p>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-              Start Training
+            <button
+              onClick={() => setShowStudentDetail(false)}
+              className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-full transition-all"
+            >
+              <X className="w-6 h-6" />
             </button>
           </div>
-        ))}
-      </div>
-    </div>
-  );
+        </div>
+      )}
+      
+      {/* Scrollable content */}
+      <div className="overflow-y-auto max-h-[calc(95vh-120px)] p-8">
+        {selectedStudent && (
+          <div className="space-y-8">
+            {/* Academic Overview Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200 hover:shadow-lg transition-shadow">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-blue-600 rounded-lg">
+                    <TrendingUp className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-sm font-semibold text-blue-900">CGPA</span>
+                </div>
+                <p className="text-3xl font-bold text-blue-700">{selectedStudent.average_cgpa}</p>
+              </div>
+              <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl border border-green-200 hover:shadow-lg transition-shadow">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-green-600 rounded-lg">
+                    <CheckCircle className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-sm font-semibold text-green-900">Attendance</span>
+                </div>
+                <p className="text-3xl font-bold text-green-700">{selectedStudent.attendance}%</p>
+              </div>
+              <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded-xl border border-yellow-200 hover:shadow-lg transition-shadow">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-yellow-600 rounded-lg">
+                    <AlertCircle className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-sm font-semibold text-yellow-900">Backlogs</span>
+                </div>
+                <p className="text-3xl font-bold text-yellow-700">{selectedStudent.backlogs}</p>
+              </div>
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl border border-purple-200 hover:shadow-lg transition-shadow">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 bg-purple-600 rounded-lg">
+                    <BookOpen className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-sm font-semibold text-purple-900">Total Marks</span>
+                </div>
+                <p className="text-3xl font-bold text-purple-700">{selectedStudent.total_marks}</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Personal & Academic Info */}
+              <div className="space-y-6">
+                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                  <h4 className="text-lg font-bold mb-6 text-gray-900 flex items-center gap-2">
+                    <div className="p-2 bg-blue-600 rounded-lg">
+                      <User className="w-5 h-5 text-white" />
+                    </div>
+                    Personal Information
+                  </h4>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4 p-3 bg-white rounded-lg border border-gray-100">
+                      <Mail className="w-5 h-5 text-gray-500" />
+                      <div>
+                        <p className="text-sm text-gray-500 font-medium">Email</p>
+                        <p className="font-semibold text-gray-900">{selectedStudent.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 p-3 bg-white rounded-lg border border-gray-100">
+                      <Phone className="w-5 h-5 text-gray-500" />
+                      <div>
+                        <p className="text-sm text-gray-500 font-medium">Mobile</p>
+                        <p className="font-semibold text-gray-900">{selectedStudent.mobile}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 p-3 bg-white rounded-lg border border-gray-100">
+                      <Calendar className="w-5 h-5 text-gray-500" />
+                      <div>
+                        <p className="text-sm text-gray-500 font-medium">Date of Birth</p>
+                        <p className="font-semibold text-gray-900">{new Date(selectedStudent.dob).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 p-3 bg-white rounded-lg border border-gray-100">
+                      <MapPin className="w-5 h-5 text-gray-500" />
+                      <div>
+                        <p className="text-sm text-gray-500 font-medium">City</p>
+                        <p className="font-semibold text-gray-900">{selectedStudent.city}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-  const renderRanking = () => (
-    <div className="bg-white rounded-xl p-6">
-      <h3 className="text-xl font-bold text-gray-900 mb-6">Student Rankings</h3>
-      <div className="space-y-4">
-        {students.sort((a, b) => b.gpa - a.gpa).map((student, index) => (
-          <div key={student.id} className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg">
-            <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center font-bold text-yellow-800">
-              {index + 1}
+                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                  <h4 className="text-lg font-bold mb-6 text-gray-900 flex items-center gap-2">
+                    <div className="p-2 bg-green-600 rounded-lg">
+                      <GraduationCap className="w-5 h-5 text-white" />
+                    </div>
+                    Academic Details
+                  </h4>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4 p-3 bg-white rounded-lg border border-gray-100">
+                      <Building2 className="w-5 h-5 text-gray-500" />
+                      <div>
+                        <p className="text-sm text-gray-500 font-medium">Stream</p>
+                        <p className="font-semibold text-gray-900">{selectedStudent.stream}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 p-3 bg-white rounded-lg border border-gray-100">
+                      <BookOpen className="w-5 h-5 text-gray-500" />
+                      <div>
+                        <p className="text-sm text-gray-500 font-medium">Degree</p>
+                        <p className="font-semibold text-gray-900">{selectedStudent.degree}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 p-3 bg-white rounded-lg border border-gray-100">
+                      <Calendar className="w-5 h-5 text-gray-500" />
+                      <div>
+                        <p className="text-sm text-gray-500 font-medium">Academic Year</p>
+                        <p className="font-semibold text-gray-900">{selectedStudent.enrollment_year} - {selectedStudent.passout_year}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 p-3 bg-white rounded-lg border border-gray-100">
+                      <BookOpen className="w-5 h-5 text-gray-500" />
+                      <div>
+                        <p className="text-sm text-gray-500 font-medium">Current Semester</p>
+                        <p className="font-semibold text-gray-900">{selectedStudent.semester}</p>
+                      </div>
+                    </div>
+                    {selectedStudent.pending_fees > 0 && (
+                      <div className="flex items-center gap-4 p-3 bg-red-50 rounded-lg border border-red-200">
+                        <AlertCircle className="w-5 h-5 text-red-500" />
+                        <div>
+                          <p className="text-sm text-red-700 font-medium">Pending Fees</p>
+                          <p className="font-semibold text-red-800">₹{selectedStudent.pending_fees}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Skills & Projects */}
+              <div className="space-y-6">
+                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                  <h4 className="text-lg font-bold mb-6 text-gray-900 flex items-center gap-2">
+                    <div className="p-2 bg-indigo-600 rounded-lg">
+                      <Code className="w-5 h-5 text-white" />
+                    </div>
+                    Skills
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedStudent.skills.map((skill, index) => (
+                      <span key={index} className="px-4 py-2 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium border border-indigo-200 hover:bg-indigo-200 transition-colors">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                  <h4 className="text-lg font-bold mb-6 text-gray-900 flex items-center gap-2">
+                    <div className="p-2 bg-orange-600 rounded-lg">
+                      <FileText className="w-5 h-5 text-white" />
+                    </div>
+                    Projects
+                  </h4>
+                  <div className="space-y-3">
+                    {selectedStudent.projects.map((project, index) => (
+                      <div key={index} className="p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
+                        <p className="font-semibold text-gray-900">{project}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                  <h4 className="text-lg font-bold mb-6 text-gray-900 flex items-center gap-2">
+                    <div className="p-2 bg-yellow-600 rounded-lg">
+                      <Award className="w-5 h-5 text-white" />
+                    </div>
+                    Certificates ({selectedStudent.certificates.length})
+                  </h4>
+                  <div className="space-y-3">
+                    {selectedStudent.certificates.slice(0, 3).map((cert, index) => (
+                      <div key={index} className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200 hover:shadow-md transition-shadow">
+                        <p className="font-semibold text-green-900">{cert.title}</p>
+                        <p className="text-sm text-gray-700 mt-2">{cert.description.substring(0, 100)}...</p>
+                        <p className="text-xs text-gray-600 mt-3 font-medium">
+                          Issued: {new Date(cert.issue_date).toLocaleDateString()}
+                        </p>
+                      </div>
+                    ))}
+                    {selectedStudent.certificates.length > 3 && (
+                      <div className="text-center">
+                        <span className="text-sm text-gray-600 bg-gray-200 px-4 py-2 rounded-full">
+                          +{selectedStudent.certificates.length - 3} more certificates
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                  <h4 className="text-lg font-bold mb-6 text-gray-900 flex items-center gap-2">
+                    <div className="p-2 bg-pink-600 rounded-lg">
+                      <Briefcase className="w-5 h-5 text-white" />
+                    </div>
+                    Internships ({selectedStudent.internships.length})
+                  </h4>
+                  <div className="space-y-3">
+                    {selectedStudent.internships.map((internship, index) => (
+                      <div key={index} className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200 hover:shadow-md transition-shadow">
+                        <p className="font-semibold text-purple-900">{internship.title}</p>
+                        <p className="text-sm text-gray-700 mt-2">{internship.description.substring(0, 100)}...</p>
+                        <p className="text-xs text-gray-600 mt-3 font-medium">
+                          Date: {new Date(internship.date).toLocaleDateString()}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="flex-1">
-              <h4 className="font-semibold">{student.name}</h4>
-              <p className="text-sm text-gray-600">{student.department} - {student.year} Year</p>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-bold text-gray-900">{student.gpa}</div>
-              <div className="text-sm text-gray-600">GPA</div>
+
+            {/* Subjects */}
+            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+              <h4 className="text-lg font-bold mb-6 text-gray-900 flex items-center gap-2">
+                <div className="p-2 bg-teal-600 rounded-lg">
+                  <BookOpen className="w-5 h-5 text-white" />
+                </div>
+                Subjects
+              </h4>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {selectedStudent.subjects.map((subject, index) => (
+                  <div key={index} className="px-4 py-3 bg-white text-gray-800 rounded-lg text-sm text-center border border-gray-200 hover:shadow-md transition-shadow font-medium">
+                    {subject}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        ))}
+        )}
+      </div>
+    </div>
+  </div>
+);
+
+// Students List Modal
+const StudentsListModal = () => {
+  const departmentStudents = getStudentsByDepartment(selectedDepartment);
+  
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-40 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[85vh] overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-700 px-8 py-6 text-white">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-bold">
+                {selectedDepartment} Students
+              </h2>
+              <p className="text-indigo-100 mt-1">
+                {departmentStudents.length} student{departmentStudents.length !== 1 ? 's' : ''} enrolled
+              </p>
+            </div>
+            <button
+              onClick={() => setShowModal(false)}
+              className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-full transition-all"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+        </div>
+        
+        {/* Content */}
+        <div className="p-8 overflow-y-auto max-h-[calc(85vh-120px)]">
+          {departmentStudents.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-24 h-24 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <Users className="w-12 h-12 text-gray-400" />
+              </div>
+              <p className="text-gray-600 text-lg">No students found in this department.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {departmentStudents.map((student) => (
+                <div
+                  key={student._id}
+                  className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-xl hover:border-blue-300 transition-all duration-300 cursor-pointer group"
+                  onClick={() => handleStudentClick(student)}
+                >
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-gray-100 group-hover:ring-blue-300 transition-all">
+                      <img
+                        src={student.profile_image}
+                        alt={student.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = `https://ui-avatars.com/api/?name=${student.name}&background=3b82f6&color=fff&size=56`;
+                        }}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-gray-900 group-hover:text-blue-700 transition-colors">{student.name}</h3>
+                      <p className="text-sm text-gray-600 font-medium">{student.roll_number}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-gray-400" />
+                      <p className="text-sm text-gray-600 truncate">{student.email}</p>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4 text-blue-500" />
+                        <span className="text-sm font-semibold text-blue-700">CGPA: {student.average_cgpa}</span>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        student.status === 'Passout' ? 'bg-green-100 text-green-800' : 
+                        student.status === 'Active' ? 'bg-blue-100 text-blue-800' : 
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {student.status}
+                      </span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        <span className="text-xs text-gray-600">Attendance: {student.attendance}%</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-yellow-500" />
+                        <span className="text-xs text-gray-600">Backlogs: {student.backlogs}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
+};
 
+const renderStudents = () => (
+  <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+    {/* Header Section */}
+    <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-700 px-8 py-6 text-white relative overflow-hidden">
+      <div className="absolute inset-0 bg-black/10"></div>
+      <div className="relative z-10">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+              <Users className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold">Student Directory</h3>
+              <p className="text-indigo-100 mt-1">Explore students across all departments</p>
+            </div>
+          </div>
+          <div className="hidden md:flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full backdrop-blur-sm">
+            <GraduationCap className="w-5 h-5" />
+            <span className="text-sm font-medium">
+              {collegeInfo.departments.reduce((total, dept) => total + getStudentsByDepartment(dept).length, 0)} Total Students
+            </span>
+          </div>
+        </div>
+      </div>
+      {/* Decorative elements */}
+      <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
+      <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-white/5 rounded-full blur-3xl"></div>
+    </div>
+
+    {/* Content Section */}
+    <div className="p-8">
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-16 space-y-4">
+          <div className="relative">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-200"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent absolute top-0 left-0"></div>
+          </div>
+          <div className="text-center">
+            <p className="text-lg font-semibold text-gray-700">Loading Student Data</p>
+            <p className="text-sm text-gray-500 mt-1">Please wait while we fetch the information...</p>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+          {collegeInfo.departments.map((dept, index) => {
+            const departmentStudentCount = getStudentsByDepartment(dept).length;
+            const colors = [
+              'from-blue-500 to-cyan-500',
+              'from-purple-500 to-pink-500', 
+              'from-green-500 to-emerald-500',
+              'from-orange-500 to-red-500',
+              'from-indigo-500 to-purple-500',
+              'from-teal-500 to-green-500'
+            ];
+            const bgColors = [
+              'bg-gradient-to-br from-blue-50 to-cyan-50',
+              'bg-gradient-to-br from-purple-50 to-pink-50',
+              'bg-gradient-to-br from-green-50 to-emerald-50', 
+              'bg-gradient-to-br from-orange-50 to-red-50',
+              'bg-gradient-to-br from-indigo-50 to-purple-50',
+              'bg-gradient-to-br from-teal-50 to-green-50'
+            ];
+            const iconColors = [
+              'text-blue-600',
+              'text-purple-600',
+              'text-green-600',
+              'text-orange-600', 
+              'text-indigo-600',
+              'text-teal-600'
+            ];
+            
+            return (
+              <div 
+                key={index} 
+                className={`${bgColors[index % bgColors.length]} rounded-2xl p-6 border border-white/50 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 group cursor-pointer relative overflow-hidden`}
+              >
+                {/* Background decoration */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-white/30 to-transparent rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-500"></div>
+                
+                <div className="relative z-10">
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div className={`p-4 bg-gradient-to-r ${colors[index % colors.length]} rounded-xl shadow-lg group-hover:shadow-xl transition-shadow`}>
+                      <Building2 className="w-8 h-8 text-white" />
+                    </div>
+                    <div className="text-right">
+                      <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                        <Users className="w-4 h-4" />
+                        <span>Students</span>
+                      </div>
+                      <div className="text-2xl font-bold text-gray-800">{departmentStudentCount}</div>
+                    </div>
+                  </div>
+
+                  {/* Department Name */}
+                  <h4 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-gray-700 transition-colors">
+                    {dept}
+                  </h4>
+                  
+                  {/* Description */}
+                  <p className="text-gray-600 text-sm leading-relaxed mb-6">
+                  Total: {departmentStudentCount} seats
+                  </p>
+
+                 
+
+                  {/* Action Button */}
+                  <button
+                    onClick={() => handleDepartmentClick(dept)}
+                    className={`w-full bg-gradient-to-r ${colors[index % colors.length]} text-white font-semibold py-4 px-6 rounded-xl hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300 transform hover:-translate-y-0.5 flex items-center justify-center gap-3 group`}
+                  >
+                    <span>Explore Students</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm">({departmentStudentCount})</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Bottom Stats Bar */}
+      {!isLoading && (
+        <div className="mt-12 bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl p-6 text-white">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-blue-400">
+                {collegeInfo.departments.length}
+              </div>
+              <div className="text-sm text-gray-300 mt-1">Departments</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-green-400">
+                {collegeInfo.departments.reduce((total, dept) => total + getStudentsByDepartment(dept).length, 0)}
+              </div>
+              <div className="text-sm text-gray-300 mt-1">Total Students</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-purple-400">100%</div>
+              <div className="text-sm text-gray-300 mt-1">Active Programs</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-orange-400">24/7</div>
+              <div className="text-sm text-gray-300 mt-1">Support Available</div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+    
+    {/* Modals */}
+    {showModal && <StudentsListModal />}
+    {showStudentDetail && <StudentDetailModal />}
+  </div>
+);
+
+  
   const renderStatistics = () => (
     <div className="bg-white rounded-xl p-6">
       <h3 className="text-xl font-bold text-gray-900 mb-6">College Statistics</h3>
@@ -1132,9 +1745,9 @@ const renderWorkshops = () => (
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard': return renderDashboard();
-      case 'training': return renderTraining();
+      case 'students': return renderStudents();
       case 'workshops': return renderWorkshops();
-      case 'ranking': return renderRanking();
+      // case 'ranking': return renderRanking();
       case 'statistics': return renderStatistics();
       case 'home': return renderHomePage();
       default: return renderDashboard();
