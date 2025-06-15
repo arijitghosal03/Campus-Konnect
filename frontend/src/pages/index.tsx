@@ -29,48 +29,48 @@ const ProfessionalLandingPage = () => {
   const testimonials = [
   {
     id: 1,
-    name: "Sarah Brown",
+    name: "Tushar Chowdhury",
     role: "Senior Designer",
-    company: "Wonderland Design Co.",
-    avatar: "/api/placeholder/50/50",
-    text: "I've had the pleasure of working with teams that truly understand design. The AI agents helped us streamline our design process and deliver exceptional results for our clients.",
+    company: "Tata Consultancy Services",
+    avatar: "HR1.jpg",
+    text: "Experienced Seamless hiring process and excellent support from the team. The platform is user-friendly and has helped us find top talent quickly.",
     rating: 5
   },
   {
     id: 2,
-    name: "Sophia Earwhisper",
-    role: "Art Director",
-    company: "Creative Studios",
-    avatar: "/api/placeholder/50/50",
-    text: "I really appreciate!! Congue mauris rhoncus eleifend vel elit rhoncus ultrices vel lacus eros varius consequat",
+    name: "Sneha Roy",
+    role: "HR Manager",
+    company: "Wipro Technologies",
+    avatar: "HR2.png",
+    text: "I really appreciate the efforts and effective communication from the team. The platform is intuitive and has streamlined our hiring process significantly.",
     rating: 5
   },
   {
     id: 3,
-    name: "Victoria Wilson",
+    name: "Rajesh Kumar",
     role: "Creative Lead",
-    company: "Innovation Desk Co.",
-    avatar: "/api/placeholder/50/50",
-    text: "I was very impressed! Duis malesuada ultricies mi quis, in mollis placerat sollicitudin accumsan. Adipiscing eget dui volutpat quis venenatis quis. Viverra facilisis ante tellus lorem suspendisse augue aenean sit.",
+    company: "Infosys Ltd.",
+    avatar: "HR3.jpg",
+    text: "I was very impressed! The platform is easy to use and has a great selection of candidates. The support team was also very responsive and helpful.",
     rating: 5
   },
   {
     id: 4,
-    name: "Julie Chen",
+    name: "Debanjan Chatterjee",
     role: "Marketing Director",
-    company: "Brand Solutions Inc.",
-    avatar: "/api/placeholder/50/50",
-    text: "Good Job! Lorem ipsum dolor sit amet lorem amet ipsum lorem dolor sit amet consectetur adipiscing elit sed do eiusmod",
+    company: "Cognizant Technology Solutions",
+    avatar: "HR4.jpeg",
+    text: "working with GCELT has been a game-changer for our hiring process. Their platform is efficient and the team is always ready to assist with any queries.",
     rating: 5,
     featured: true
   },
   {
     id: 5,
-    name: "Dave Richardson",
+    name: "Krishna Patel",
     role: "Product Manager",
-    company: "Tech Innovations Ltd.",
-    avatar: "/api/placeholder/50/50",
-    text: "Dave Richardson was a true professional when collaborating with our team. His attention to detail and creative approach resulted in outstanding deliverables.",
+    company: "Intel Corporation",
+    avatar: "HR5.jpeg",
+    text: "The team gave their best to ensure a smooth hiring experience. The platform is robust and has helped us connect with high-quality candidates.",
     rating: 5
   },
   {
@@ -114,14 +114,7 @@ const ProfessionalLandingPage = () => {
     }
   ];
 
-  const integrations = [
-    { name: "Microsoft Teams", color: "bg-blue-500" },
-    { name: "Google Workspace", color: "bg-red-500" },
-    { name: "Slack", color: "bg-purple-500" },
-    { name: "Zoom", color: "bg-blue-600" },
-    { name: "Canvas LMS", color: "bg-orange-500" },
-    { name: "Blackboard", color: "bg-green-600" }
-  ];
+
 
   const features = [
     {
@@ -639,14 +632,15 @@ return (
                <Link href="#features">
                 <div className="text-gray-700 hover:text-blue-600 font-medium cursor-pointer">Features</div>
               </Link>
-               <Link href="#demo">
-                <div className="text-gray-700 hover:text-blue-600 font-medium cursor-pointer">Demo</div>
-              </Link>
+              
                <Link href="/posts">
                 <div className="text-gray-700 hover:text-blue-600 font-medium cursor-pointer">Posts</div>
               </Link>
                <Link href="#testmonials">
                 <div className="text-gray-700 hover:text-blue-600 font-medium cursor-pointer">Testamonials</div>
+              </Link>
+                 <Link href="#workshop">
+                <div className="text-gray-700 hover:text-blue-600 font-medium cursor-pointer">Workshop</div>
               </Link>
               
               
@@ -736,7 +730,7 @@ return (
                       <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
                         <Bot className="w-8 h-8 text-white" />
                       </div>
-                      <p className="text-sm font-bold text-gray-800">AI Workbench</p>
+                      <p className="text-sm font-bold text-gray-800">AI Powered</p>
                     </div>
                   </div>
                 </div>
@@ -750,7 +744,7 @@ return (
                   </div>
                   <div>
                     <p className="text-sm font-bold text-gray-800">Students</p>
-                    <p className="text-xs text-gray-500">50,000+ Active</p>
+                    <p className="text-xs text-gray-500">100+ Active</p>
                   </div>
                 </div>
               </div>
@@ -761,8 +755,8 @@ return (
                     <BookOpen className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-800">Courses</p>
-                    <p className="text-xs text-gray-500">1,200+ Available</p>
+                    <p className="text-sm font-bold text-gray-800">Companies</p>
+                    <p className="text-xs text-gray-500">120+ Hirings</p>
                   </div>
                 </div>
               </div>
@@ -774,7 +768,7 @@ return (
                   </div>
                   <div>
                     <p className="text-sm font-bold text-gray-800">Faculty</p>
-                    <p className="text-xs text-gray-500">500+ Educators</p>
+                    <p className="text-xs text-gray-500">50+ Educators</p>
                   </div>
                 </div>
               </div>
@@ -826,85 +820,49 @@ return (
         <div className="absolute top-1/3 right-1/4 w-8 h-8 bg-indigo-400 rounded-full opacity-40 animate-bounce" style={{animationDelay: '3s'}}></div>
       </section>
 
-      {/* AI Workbench Section */}
-      <section id ="demo" className="py-20 bg-gray-50">
+     
+
+      {/* Process Automation Section */}
+      <section id="features" className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-5xl font-bold mb-4">
-              <span className="text-blue-600">AI Workbench,</span>
-              <span className="text-gray-900"> Infinite<br />Possibilities For Education</span>
+              <span className="text-blue-600">Automate</span>
+              <span className="text-gray-900"> Complex Campus<br />Workflows </span>
+              <span className="text-blue-600">Effortlessly</span>
             </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Transform your institution's operations with intelligent automation that handles everything from admissions to graduation.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {workflowSteps.map((step, index) => (
+            {features.map((feature, index) => (
               <div key={index} className="bg-white rounded-2xl p-8 shadow-sm">
-                <div className={`w-16 h-16 bg-gradient-to-r ${step.color} rounded-2xl flex items-center justify-center text-white mb-6`}>
-                  {step.icon}
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 mb-6">
+                  {feature.icon}
                 </div>
-                <h3 className="text-xl font-semibold mb-4 text-gray-900">{step.title}</h3>
-                <p className="text-gray-600">{step.description}</p>
+                <h3 className="text-2xl font-bold mb-2 text-gray-900">{feature.title}</h3>
+                <p className="text-gray-600 mb-6">{feature.subtitle}</p>
+                <ul className="space-y-3">
+                  {feature.items.map((item, itemIndex) => (
+                    <li key={itemIndex} className="flex items-center gap-3">
+                      <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                        <Check className="w-3 h-3 text-green-600" />
+                      </div>
+                      <span className="text-gray-700">{item}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             ))}
-          </div>
-
-          {/* Integration Preview */}
-          <div className="mt-20 bg-white rounded-2xl p-8 shadow-sm">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              <div>
-                <h3 className="text-3xl font-bold mb-6 text-gray-900">
-                  Customize AI To Scale And Optimize
-                </h3>
-                <div className="space-y-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mt-1">
-                      <Check className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">Teaching and Learning</h4>
-                      <p className="text-gray-600 text-sm">Personalized learning paths and intelligent tutoring systems</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-4">
-                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mt-1">
-                      <Check className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">Students</h4>
-                      <p className="text-gray-600 text-sm">AI-powered study assistance and career guidance</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-4">
-                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mt-1">
-                      <Check className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">Admin & Operations</h4>
-                      <p className="text-gray-600 text-sm">Streamlined administrative processes and resource management</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-4">
-                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mt-1">
-                      <Check className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">Marketing & Services</h4>
-                      <p className="text-gray-600 text-sm">Enhanced outreach and student services</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-gray-50 rounded-2xl p-8 h-96 flex items-center justify-center">
-                <div className="text-center">
-                  <Rocket className="w-24 h-24 text-blue-600 mx-auto mb-4" />
-                  <p className="text-gray-600">Interactive Demo Preview</p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
 
+    <div>
+
+      
 {/*Testamonials Section*/}
     <section id ="testmonials" className="py-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -927,7 +885,7 @@ return (
               <div className="bg-white rounded-2xl p-8 shadow-lg border-2 border-blue-100 w-80">
                 <div className="flex flex-col items-center text-center mb-6">
                   <img 
-                    src={testimonials.find(t => t.featured)?.avatar} 
+                    src='HR4.jpeg' 
                     alt="Featured testimonial" 
                     className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg mb-4"
                   />
@@ -1013,46 +971,7 @@ return (
         </div>
       </div>
     </section>
-      {/* Process Automation Section */}
-      <section id="features" className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-5xl font-bold mb-4">
-              <span className="text-blue-600">Automate</span>
-              <span className="text-gray-900"> Complex Campus<br />Workflows </span>
-              <span className="text-blue-600">Effortlessly</span>
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Transform your institution's operations with intelligent automation that handles everything from admissions to graduation.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <div key={index} className="bg-white rounded-2xl p-8 shadow-sm">
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 mb-6">
-                  {feature.icon}
-                </div>
-                <h3 className="text-2xl font-bold mb-2 text-gray-900">{feature.title}</h3>
-                <p className="text-gray-600 mb-6">{feature.subtitle}</p>
-                <ul className="space-y-3">
-                  {feature.items.map((item, itemIndex) => (
-                    <li key={itemIndex} className="flex items-center gap-3">
-                      <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
-                        <Check className="w-3 h-3 text-green-600" />
-                      </div>
-                      <span className="text-gray-700">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-    <div>
-<section className="py-20">
+<section id ="workshop" className="py-20">
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 rounded-3xl p-12 text-center text-white relative overflow-hidden">
       {/* Background decoration */}
@@ -1070,7 +989,7 @@ return (
           </span>
         </h2>
         <p className="text-xl text-purple-100 mb-8 max-w-3xl mx-auto">
-          Join our expert-led workshops to enhance your skills and knowledge. Learn from industry professionals in interactive sessions.
+        Eager to share your expertise? Join our college to organize workshop and connect with us. Whether you're a student, faculty, or industry professional, there's a place for you to share your knowledge and grow.
         </p>
         
         {/* Speaker Instructions */}
@@ -1139,9 +1058,9 @@ return (
             <div>
               <div className="flex items-center mb-6">
                 <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">S</span>
+                  <span className="text-white font-bold text-sm">CK</span>
                 </div>
-                <span className="ml-2 text-xl font-bold">SARSS</span>
+                <span className="ml-2 text-xl font-bold">Campus Konnect</span>
               </div>
               <p className="text-gray-400 mb-6">
                 Empowering educational institutions with AI-driven solutions for the future of learning.

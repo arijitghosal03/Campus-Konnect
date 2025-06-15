@@ -68,34 +68,6 @@ type WorkshopSummary = {
   photos: number[] | number | string[] | string;
 };
 
-type Workshop = {
-  id: number;
-  title: string;
-  speaker: {
-    name: string;
-    designation: string;
-    company: string;
-    bio?: string;
-    image?: string;
-  };
-  topic?: string;
-  date: string;
-  time?: string;
-  venue: string;
-  requirements?: string[];
-  contact: {
-    email: string;
-    phone: string;
-  };
-  status: string;
-  description?: string;
-  maxParticipants?: number;
-  targetAudience?: string;
-  submittedDate?: string;
-  hasSummary?: boolean;
-  summary?: WorkshopSummary;
-};
-
 const CollegeDashboard = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('homepage');

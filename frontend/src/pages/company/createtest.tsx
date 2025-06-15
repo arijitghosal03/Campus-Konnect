@@ -78,7 +78,7 @@ export default function CreateTest() {
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Link href="/company/test" className="flex items-center space-x-2 text-gray-600 hover:text-gray-900">
+              <Link href="/company" className="flex items-center space-x-2 text-gray-600 hover:text-gray-900">
                 <ArrowLeft className="h-5 w-5" />
                 <span>Back to Dashboard</span>
               </Link>

@@ -864,7 +864,7 @@ app.post('/college/students', authenticate, authorize(['college']), (async (req:
   }
 }) as CustomRequestHandler);
 
-app.get('/college/students', authenticate, authorize(['college']), (async (req: CustomRequest, res: Response) => {
+app.get('/college/students', authenticate, authorize(['college','company']), (async (req: CustomRequest, res: Response) => {
   try {
     const students = await Student.find({})
   .populate({

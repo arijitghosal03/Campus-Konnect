@@ -30,21 +30,58 @@ import {
   Search,
   Filter,
   Menu,
-  X
+  X,
+  Code,
+  CheckCircle,
+  Calendar
 } from 'lucide-react';
 import Link from 'next/link';
 
 interface Student {
-  id: number;
+  _id: string;
   name: string;
-  roll: string;
-  branch: string;
+  roll_number: string;
+  college: string;
+  degree: string;
+  stream: string;
+  semester: number;
+  enrollment_year: number;
+  passout_year: number;
+  subjects: string[];
+  backlogs: number;
+  average_cgpa: number;
+  status: string;
+  total_marks: number;
+  pending_fees: number;
+  attendance: number;
+  dob: string;
+  mobile: string;
+  email: string;
+  city: string;
+  gender: string;
+  profile_image: string;
+  resume: string[];
   skills: string[];
-  cgpa: string;
-  year: string;
-  image: string;
-  internships: string[];
+  projects: string[];
+  posts: Array<{
+    title: string;
+    content: string;
+    date: string;
+    description: string;
+  }>;
+  certificates: Array<{
+    title: string;
+    description: string;
+    issue_date: string;
+    credential_id: string;
+  }>;
+  internships: Array<{
+    title: string;
+    description: string;
+    date: string;
+  }>;
 }
+
 
 interface Message {
   type: 'user' | 'bot';
@@ -59,7 +96,7 @@ interface SkillAnalysis {
 }
 
 interface BranchAnalysis {
-  branch: string;
+  stream: string;
   avgCGPA: number;
   studentCount: number;
   topSkills: string[];
@@ -68,7 +105,7 @@ interface BranchAnalysis {
 export default function AdminDashboard() {
   const router = useRouter();
   const [students, setStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBranch, setSelectedBranch] = useState('all');
@@ -84,6 +121,8 @@ export default function AdminDashboard() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
    const [isLoggedIn, setIsLoggedIn] = useState(false);
+     const [isLoading, setIsLoading] = useState(false);
+   
 
 
   useEffect(() => {
@@ -94,28 +133,45 @@ export default function AdminDashboard() {
   }, [router]);
 
   // Fetch students data
-  useEffect(() => {
-    const fetchStudents = async () => {
+  const fetchStudentsData = async () => {
+      setIsLoading(true);
       try {
-        setLoading(true);
-        const response = await fetch('/students.json');
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        const response = await fetch(`${apiUrl}/college/students`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        });
+        
         const data = await response.json();
-        setStudents(data);
-        setError(null);
+        
+        if (response.ok) {
+          console.log("Students data", data);
+          setStudents(data|| []);
+        } else {
+          console.error('Error fetching students:', data.message);
+        }
       } catch (err) {
-        console.error('Error fetching students:', err);
-        setError('Failed to load student data. Please try again later.');
+        console.error('Fetch error:', err);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
-
-    fetchStudents();
-  }, []);
-
+  
+    useEffect(() => {
+      fetchStudentsData();
+    }, []);
+  
+    // Get students by department
+    const getStudentsByDepartment = (department: string) => {
+      return students.filter(student => 
+        student.stream.toLowerCase().includes(department.toLowerCase()) || 
+        department.toLowerCase().includes(student.stream.toLowerCase())
+      );
+    };
   // Auto-scroll chat
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -141,18 +197,18 @@ export default function AdminDashboard() {
   };
 
   const getBranchAnalysis = (): BranchAnalysis[] => {
-    const branchData: { [key: string]: { cgpas: number[], skills: string[] } } = {};
+    const streamData: { [key: string]: { average_cgpas: number[], skills: string[] } } = {};
     
     students.forEach(student => {
-      if (!branchData[student.branch]) {
-        branchData[student.branch] = { cgpas: [], skills: [] };
+      if (!streamData[student.stream]) {
+        streamData[student.stream] = { average_cgpas: [], skills: [] };
       }
-      branchData[student.branch].cgpas.push(parseFloat(student.cgpa));
-      branchData[student.branch].skills.push(...student.skills);
+      streamData[student.stream].average_cgpas.push(student.average_cgpa);
+      streamData[student.stream].skills.push(...student.skills);
     });
 
-    return Object.entries(branchData).map(([branch, data]) => {
-      const avgCGPA = data.cgpas.reduce((sum, cgpa) => sum + cgpa, 0) / data.cgpas.length;
+    return Object.entries(streamData).map(([stream, data]) => {
+      const avgCGPA = data.average_cgpas.reduce((sum, cgpa) => sum + cgpa, 0) / data.average_cgpas.length;
       const skillCount: { [key: string]: number } = {};
       data.skills.forEach(skill => {
         skillCount[skill] = (skillCount[skill] || 0) + 1;
@@ -163,21 +219,21 @@ export default function AdminDashboard() {
         .map(([skill]) => skill);
 
       return {
-        branch,
+        stream,
         avgCGPA: Math.round(avgCGPA * 100) / 100,
-        studentCount: data.cgpas.length,
+        studentCount: data.average_cgpas.length,
         topSkills
       };
     });
   };
 
   const getCareerReadinessScore = (student: Student): number => {
-    const cgpaScore = parseFloat(student.cgpa) * 10;
+    const cgpaScore = student.average_cgpa * 10;
     const skillsScore = student.skills.length * 5;
     const internshipScore = student.internships.length * 15;
-    const yearMultiplier = student.year === 'Final' ? 1.2 : student.year === 'Third' ? 1.0 : 0.8;
+   
     
-    return Math.min(100, Math.round((cgpaScore + skillsScore + internshipScore) * yearMultiplier));
+    return Math.min(100, Math.round((cgpaScore + skillsScore + internshipScore) ));
   };
 
   const getTopPerformers = () => {
@@ -191,13 +247,13 @@ export default function AdminDashboard() {
   };
 
   const getSkillRecommendations = (student: Student): string[] => {
-    const branchSkillMap: { [key: string]: string[] } = {
+    const streamSkillMap: { [key: string]: string[] } = {
       'Computer Science': ['React', 'Python', 'Machine Learning', 'Docker', 'AWS'],
       'Electronics and Communication': ['Python', 'MATLAB', 'PCB Design', 'Signal Processing', 'IoT'],
       'Mechanical': ['CAD', 'Python', 'MATLAB', 'Automation', 'Robotics']
     };
     
-    const recommendedSkills = branchSkillMap[student.branch] || [];
+    const recommendedSkills = streamSkillMap[student.stream] || [];
     return recommendedSkills.filter(skill => !student.skills.includes(skill)).slice(0, 3);
   };
 
@@ -212,17 +268,17 @@ export default function AdminDashboard() {
       ).join('\n')}`;
     }
     
-    if (lowerMessage.includes('branch performance') || lowerMessage.includes('branch analysis')) {
-      const branchAnalysis = getBranchAnalysis();
-      return `Branch Performance Analysis:\n${branchAnalysis.map(branch => 
-        `${branch.branch}: Avg CGPA ${branch.avgCGPA} (${branch.studentCount} students)\nTop Skills: ${branch.topSkills.join(', ')}`
+    if (lowerMessage.includes('stream performance') || lowerMessage.includes('stream analysis')) {
+      const streamAnalysis = getBranchAnalysis();
+      return `Branch Performance Analysis:\n${streamAnalysis.map(stream => 
+        `${stream.stream}: Avg CGPA ${stream.avgCGPA} (${stream.studentCount} students)\nTop Skills: ${stream.topSkills.join(', ')}`
       ).join('\n\n')}`;
     }
     
     if (lowerMessage.includes('top performers') || lowerMessage.includes('best students')) {
       const topPerformers = getTopPerformers();
       return `Top 5 Performers by Career Readiness Score:\n${topPerformers.map((student, index) => 
-        `${index + 1}. ${student.name} - Score: ${student.readinessScore}/100 (CGPA: ${student.cgpa})`
+        `${index + 1}. ${student.name} - Score: ${student.readinessScore}/100 (CGPA: ${student.average_cgpa})`
       ).join('\n')}`;
     }
     
@@ -238,14 +294,14 @@ export default function AdminDashboard() {
     }
     
     if (lowerMessage.includes('predict') || lowerMessage.includes('forecast')) {
-      const avgCGPA = students.reduce((sum, s) => sum + parseFloat(s.cgpa), 0) / students.length;
-      const highPerformers = students.filter(s => parseFloat(s.cgpa) > 8.5).length;
+      const avgCGPA = students.reduce((sum, s) => sum + Number(s.average_cgpa), 0) / students.length;
+      const highPerformers = students.filter(s => Number(s.average_cgpa) > 8.5).length;
       const percentage = Math.round((highPerformers / students.length) * 100);
       
       return `Predictive Analysis:\n• Average CGPA: ${avgCGPA.toFixed(2)}\n• ${percentage}% are high performers (CGPA > 8.5)\n• Based on current trends, we predict strong placement outcomes for ${highPerformers} students`;
     }
     
-    return "I can help you with: skill analysis, branch performance, top performers, skill gap analysis, and predictive insights. What would you like to explore?";
+    return "I can help you with: skill analysis, stream performance, top performers, skill gap analysis, and predictive insights. What would you like to explore?";
   };
 
   const handleSendMessage = () => {
@@ -263,18 +319,18 @@ export default function AdminDashboard() {
     }, 1000 + Math.random() * 1000);
   };
 
-  // Filter students based on search and branch
+  // Filter students based on search and stream
   const filteredStudents = students.filter(student => {
     const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         student.roll.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         student.roll_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          student.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesBranch = selectedBranch === 'all' || student.branch === selectedBranch;
+    const matchesBranch = selectedBranch === 'all' || student.stream === selectedBranch;
     return matchesSearch && matchesBranch;
   });
 
-  const branches = [...new Set(students.map(s => s.branch))];
+  const streames = [...new Set(students.map(s => s.stream))];
   const skillsAnalysis = getSkillsAnalysis();
-  const branchAnalysis = getBranchAnalysis();
+  const streamAnalysis = getBranchAnalysis();
   const topPerformers = getTopPerformers();
 
   if (loading) {
@@ -385,9 +441,8 @@ export default function AdminDashboard() {
           <TabsList className="grid w-full grid-cols-5 bg-white/60 backdrop-blur-sm">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="students">Students</TabsTrigger>
-            <TabsTrigger value="analytics">AI Analytics</TabsTrigger>
-            <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
-            <TabsTrigger value="assistant">AI Assistant</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+           
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -420,7 +475,7 @@ export default function AdminDashboard() {
                     <div>
                       <p className="text-green-100">Avg CGPA</p>
                       <p className="text-3xl font-bold">
-                        {(students.reduce((sum, s) => sum + parseFloat(s.cgpa), 0) / students.length).toFixed(2)}
+                        {(students.reduce((sum, s) => sum + Number(s.average_cgpa), 0) / students.length).toFixed(2)}
                       </p>
                     </div>
                     <Award className="h-8 w-8 text-green-200" />
@@ -445,7 +500,7 @@ export default function AdminDashboard() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-orange-100">Branches</p>
-                      <p className="text-3xl font-bold">{branches.length}</p>
+                      <p className="text-3xl font-bold">{streames.length}</p>
                     </div>
                     <BookOpen className="h-8 w-8 text-orange-200" />
                   </div>
@@ -466,17 +521,17 @@ export default function AdminDashboard() {
                 <CardContent>
                   <div className="space-y-4">
                     {topPerformers.map((student, index) => (
-                      <div key={student.id} className="flex items-center space-x-3 p-3 rounded-lg bg-white/60 hover:bg-white/80 transition-colors">
+                      <div key={student._id} className="flex items-center space-x-3 p-3 rounded-lg bg-white/60 hover:bg-white/80 transition-colors">
                         <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
                           {index + 1}
                         </div>
                         <div className="flex-1">
                           <p className="font-medium">{student.name}</p>
-                          <p className="text-sm text-gray-600">{student.branch}</p>
+                          <p className="text-sm text-gray-600">{student.stream}</p>
                         </div>
                         <div className="text-right">
                           <p className="font-bold text-green-600">{student.readinessScore}/100</p>
-                          <p className="text-sm text-gray-600">CGPA: {student.cgpa}</p>
+                          <p className="text-sm text-gray-600">CGPA: {student.average_cgpa}</p>
                         </div>
                       </div>
                     ))}
@@ -545,8 +600,8 @@ export default function AdminDashboard() {
                   className="px-3 py-2 border rounded-md bg-white"
                 >
                   <option value="all">All Branches</option>
-                  {branches.map(branch => (
-                    <option key={branch} value={branch}>{branch}</option>
+                  {streames.map(stream => (
+                    <option key={stream} value={stream}>{stream}</option>
                   ))}
                 </select>
               </div>
@@ -555,7 +610,7 @@ export default function AdminDashboard() {
             {/* Students Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredStudents.map((student) => (
-                <Card key={student.id} className="bg-white/60 backdrop-blur-sm hover:bg-white/80 transition-all duration-300 transform hover:scale-105">
+                <Card key={student._id} className="bg-white/60 backdrop-blur-sm hover:bg-white/80 transition-all duration-300 transform hover:scale-105">
                   <CardContent className="p-6">
                     <div className="flex items-start space-x-4">
                       <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
@@ -563,13 +618,13 @@ export default function AdminDashboard() {
                       </div>
                       <div className="flex-1">
                         <h3 className="font-semibold text-lg">{student.name}</h3>
-                        <p className="text-sm text-gray-600">{student.roll}</p>
-                        <p className="text-sm text-gray-600">{student.branch}</p>
+                        <p className="text-sm text-gray-600">{student.roll_number}</p>
+                        <p className="text-sm text-gray-600">{student.stream}</p>
                       </div>
                       <div className="text-right">
                         <div className="flex items-center space-x-1">
                           <Star className="h-4 w-4 text-yellow-500" />
-                          <span className="font-bold">{student.cgpa}</span>
+                          <span className="font-bold">{student.average_cgpa}</span>
                         </div>
                         <Badge className="bg-green-100 text-green-800 text-xs">
                           {getCareerReadinessScore(student)}/100
@@ -593,7 +648,9 @@ export default function AdminDashboard() {
                         <p className="text-sm font-medium mb-1">Internships:</p>
                         <div className="space-y-1">
                           {student.internships.map((internship, index) => (
-                            <p key={index} className="text-xs text-gray-600">{internship}</p>
+                            <p key={index} className="text-xs text-gray-600">
+                              {internship.title} {internship.date && `(${internship.date})`} - {internship.description}
+                            </p>
                           ))}
                         </div>
                       </div>
@@ -605,212 +662,331 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold mb-2">AI-Powered Analytics</h2>
-              <p className="text-gray-600">Deep insights and predictive analysis</p>
-            </div>
+  <div>
+    <h2 className="text-2xl font-bold mb-2">Recruitment Analytics</h2>
+    <p className="text-gray-600">Comprehensive insights for strategic hiring decisions</p>
+  </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card className="bg-white/60 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Brain className="h-5 w-5 mr-2 text-purple-500" />
-                    Branch Performance Analysis
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {branchAnalysis.map((branch, index) => (
-                      <div key={index} className="p-4 rounded-lg border bg-white/40">
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-semibold">{branch.branch}</h4>
-                          <Badge className="bg-blue-100 text-blue-800">
-                            {branch.studentCount} students
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-gray-600 mb-2">Average CGPA: <span className="font-semibold">{branch.avgCGPA}</span></p>
-                        <div className="flex flex-wrap gap-1">
-                          {branch.topSkills.map((skill, skillIndex) => (
-                            <Badge key={skillIndex} variant="outline" className="text-xs">
-                              {skill}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
+  {/* Key Metrics Overview */}
+  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-blue-100 text-sm">Total Applicants</p>
+            <p className="text-2xl font-bold">90</p>
+          </div>
+          <Users className="h-8 w-8 text-blue-200" />
+        </div>
+      </CardContent>
+    </Card>
+    
+    <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-green-100 text-sm">Aptitude Cleared</p>
+            <p className="text-2xl font-bold">85</p>
+          </div>
+          <CheckCircle className="h-8 w-8 text-green-200" />
+        </div>
+      </CardContent>
+    </Card>
+    
+    <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-purple-100 text-sm">Interviews Scheduled</p>
+            <p className="text-2xl font-bold">67</p>
+          </div>
+          <Calendar className="h-8 w-8 text-purple-200" />
+        </div>
+      </CardContent>
+    </Card>
+    
+    <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-orange-100 text-sm">Final Selection Rate</p>
+            <p className="text-2xl font-bold">28.5%</p>
+          </div>
+          <TrendingUp className="h-8 w-8 text-orange-200" />
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+
+  {/* Performance Analytics */}
+  <div className="grid md:grid-cols-2 gap-6">
+    <Card className="bg-white/60 backdrop-blur-sm">
+      <CardHeader>
+        <CardTitle className="flex items-center">
+          <Brain className="h-5 w-5 mr-2 text-purple-500" />
+          Aptitude Test Performance by Stream
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {[
+            { stream: "Computer Science", attempted: 50, cleared: 45, passRate: 90.0, avgScore: 78.5 },
+            { stream: "Information Technology", attempted: 18, cleared: 15, passRate: 83.2, avgScore: 89.3 },
+            { stream: "Leather Technology", attempted: 16, cleared: 12, passRate: 75.0, avgScore: 68.9 },
+          ].map((stream, index) => (
+            <div key={index} className="p-4 rounded-lg border bg-white/40">
+              <div className="flex justify-between items-start mb-2">
+                <h4 className="font-semibold">{stream.stream}</h4>
+                <Badge className={`${stream.passRate > 50 ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}>
+                  {stream.passRate}% Pass Rate
+                </Badge>
+              </div>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-gray-600">Attempted: <span className="font-semibold">{stream.attempted}</span></p>
+                  <p className="text-gray-600">Cleared: <span className="font-semibold text-green-600">{stream.cleared}</span></p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Avg Score: <span className="font-semibold">{stream.avgScore}%</span></p>
+                  <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                    <div className="bg-blue-500 h-2 rounded-full" style={{width: `${stream.avgScore}%`}}></div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
 
-              <Card className="bg-white/60 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Target className="h-5 w-5 mr-2 text-green-500" />
-                    Skill Gap Analysis
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {students.slice(0, 5).map((student) => {
-                      const recommendations = getSkillRecommendations(student);
-                      return recommendations.length > 0 ? (
-                        <div key={student.id} className="p-4 rounded-lg border bg-white/40">
-                          <h4 className="font-semibold text-sm">{student.name}</h4>
-                          <p className="text-xs text-gray-600 mb-2">{student.branch}</p>
-                          <div className="space-y-1">
-                            <p className="text-xs font-medium">Recommended Skills:</p>
-                            <div className="flex flex-wrap gap-1">
-                              {recommendations.map((skill, skillIndex) => (
-                                <Badge key={skillIndex} className="bg-orange-100 text-orange-800 text-xs">
-                                  {skill}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      ) : null;
-                    })}
+    <Card className="bg-white/60 backdrop-blur-sm">
+      <CardHeader>
+        <CardTitle className="flex items-center">
+          <Target className="h-5 w-5 mr-2 text-green-500" />
+          Interview Metrics
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {[
+            { position: "Software Engineer", scheduled: 45, completed: 38, selected: 10, successRate: 22.0 },
+            { position: "Data Analyst", scheduled: 15, completed: 10, selected: 3, successRate: 20.0 },
+            { position: "Frontend Developer", scheduled: 32, completed: 12, selected: 4, successRate: 12.5 },
+          ].map((position, index) => (
+            <div key={index} className="p-4 rounded-lg border bg-white/40">
+              <div className="flex justify-between items-start mb-2">
+                <h4 className="font-semibold text-sm">{position.position}</h4>
+                <Badge className="bg-blue-100 text-blue-800">
+                  {position.successRate}% Success
+                </Badge>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <div className="text-center">
+                  <p className="font-semibold text-gray-800">{position.scheduled}</p>
+                  <p className="text-gray-600">Scheduled</p>
+                </div>
+                <div className="text-center">
+                  <p className="font-semibold text-blue-600">{position.completed}</p>
+                  <p className="text-gray-600">Completed</p>
+                </div>
+                <div className="text-center">
+                  <p className="font-semibold text-green-600">{position.selected}</p>
+                  <p className="text-gray-600">Selected</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+
+  {/* Skills and Trends Analysis */}
+  <div className="grid md:grid-cols-3 gap-6">
+    <Card className="bg-white/60 backdrop-blur-sm">
+      <CardHeader>
+        <CardTitle className="flex items-center">
+          <Code className="h-5 w-5 mr-2 text-blue-500" />
+          Most Sought Skills
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {[
+            { skill: "React.js", demand: 92, candidates: 38 },
+            { skill: "Python", demand: 89, candidates: 24 },
+            { skill: "Node.js", demand: 85, candidates: 56 },
+            { skill: "AWS", demand: 78, candidates: 9 },
+            { skill: "Docker", demand: 71, candidates: 18 },
+            { skill: "MongoDB", demand: 68, candidates: 25 },
+            { skill: "TypeScript", demand: 64, candidates: 67 }
+          ].map((item, index) => (
+            <div key={index} className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-sm font-medium">{item.skill}</span>
+                  <span className="text-xs text-gray-600">{item.candidates} candidates</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full" style={{width: `${item.demand}%`}}></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+
+    <Card className="bg-white/60 backdrop-blur-sm">
+      <CardHeader>
+        <CardTitle className="flex items-center">
+          <Award className="h-5 w-5 mr-2 text-yellow-500" />
+          Top Performing Students
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {[
+            {student: "Arijit Ghosal", students: 89, selected: 94, rate: 98.2 },
+            { student: "Sayantan Dam", students: 156, selected: 87, rate: 80.1 },
+            { student: "Shehenaz Islam", students: 67, selected: 79, rate: 88.4 },
+            { student: "Sayantan Dam", students: 234, selected: 92, rate: 76.5 },
+            { student: "Sk Nasir Hosen", students: 198, selected: 89, rate: 84.7 },
+            { student: "Hrittika Pramanick", students: 143, selected: 93, rate: 93.1 }
+          ].map((student, index) => (
+            <div key={index} className="p-3 rounded-lg border bg-white/40">
+              <div className="flex justify-between items-center mb-1">
+                <h4 className="font-semibold text-sm">{student.student}</h4>
+                <Badge className="bg-yellow-100 text-yellow-800 text-xs">
+                  {student.rate}%
+                </Badge>
+              </div>
+              <p className="text-xs text-gray-600">
+                {student.selected}/100 marks scored
+              </p>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+
+    <Card className="bg-white/60 backdrop-blur-sm">
+      <CardHeader>
+        <CardTitle className="flex items-center">
+          <AlertTriangle className="h-5 w-5 mr-2 text-red-500" />
+          Skill Gap Insights
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="p-3 rounded-lg bg-red-50 border border-red-200">
+            <h4 className="font-semibold text-sm text-red-800 mb-2">Critical Gaps</h4>
+            <div className="space-y-1">
+              {["System Design", "Microservices", "Kubernetes", "GraphQL"].map((skill, index) => (
+                <Badge key={index} variant="outline" className="text-xs mr-1 border-red-300 text-red-700">
+                  {skill}
+                </Badge>
+              ))}
+            </div>
+          </div>
+          
+          <div className="p-3 rounded-lg bg-orange-50 border border-orange-200">
+            <h4 className="font-semibold text-sm text-orange-800 mb-2">Moderate Gaps</h4>
+            <div className="space-y-1">
+              {["CI/CD", "Redis", "Elasticsearch", "Testing"].map((skill, index) => (
+                <Badge key={index} variant="outline" className="text-xs mr-1 border-orange-300 text-orange-700">
+                  {skill}
+                </Badge>
+              ))}
+            </div>
+          </div>
+
+          <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
+            <h4 className="font-semibold text-sm text-blue-800 mb-2">Recommendations</h4>
+            <p className="text-xs text-blue-700">
+              Focus recruitment on candidates with cloud-native experience. 
+              Consider providing upskilling programs for system design concepts.
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+
+  {/* Hiring Timeline and Predictions */}
+  <Card className="bg-white/60 backdrop-blur-sm">
+    <CardHeader>
+      <CardTitle className="flex items-center">
+        <BarChart3 className="h-5 w-5 mr-2 text-indigo-500" />
+        Recruitment Pipeline & Predictions
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="grid md:grid-cols-2 gap-6">
+        <div>
+          <h4 className="font-semibold mb-3">Current Pipeline Status</h4>
+          <div className="space-y-3">
+            {[
+              { stage: "Application Screening", count: 2847, color: "bg-gray-500" },
+              { stage: "Aptitude Test", count: 1245, color: "bg-blue-500" },
+              { stage: "Technical Interview", count: 687, color: "bg-purple-500" },
+              { stage: "HR Interview", count: 234, color: "bg-green-500" },
+              { stage: "Final Selection", count: 89, color: "bg-yellow-500" }
+            ].map((stage, index) => (
+              <div key={index} className="flex items-center">
+                <div className={`w-4 h-4 rounded-full ${stage.color} mr-3`}></div>
+                <div className="flex-1">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">{stage.stage}</span>
+                    <span className="text-sm font-bold">{stage.count}</span>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <div>
+          <h4 className="font-semibold mb-3">AI-Powered Predictions</h4>
+          <div className="space-y-3">
+            <div className="p-3 rounded-lg bg-green-50 border border-green-200">
+              <div className="flex items-center mb-2">
+                <TrendingUp className="h-4 w-4 text-green-600 mr-2" />
+                <span className="font-semibold text-green-800">High Probability Hires</span>
+              </div>
+              <p className="text-sm text-green-700">
+                127 candidates show 85%+ selection probability based on assessment scores and profile analysis.
+              </p>
             </div>
-          </TabsContent>
-
-          <TabsContent value="monitoring" className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold mb-2">Live Monitoring</h2>
-              <p className="text-gray-600">Real-time surveillance and analytics</p>
+            
+            <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
+              <div className="flex items-center mb-2">
+                <Clock className="h-4 w-4 text-blue-600 mr-2" />
+                <span className="font-semibold text-blue-800">Completion Timeline</span>
+              </div>
+              <p className="text-sm text-blue-700">
+                Predicted completion in 18-22 days with current interview velocity of 45 candidates/day.
+              </p>
             </div>
-
-            <Card className="bg-white/60 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Monitor className="h-5 w-5 mr-2" />
-                  System Status
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <div className="animate-pulse">
-                    <Monitor className="h-16 w-16 mx-auto mb-4 text-blue-500" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">Monitoring System Active</h3>
-                  <p className="text-gray-600">All systems operational • {students.length} students tracked</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="assistant" className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold mb-2">AI Assistant</h2>
-              <p className="text-gray-600">Get insights and answers about your student data</p>
+            
+            <div className="p-3 rounded-lg bg-purple-50 border border-purple-200">
+              <div className="flex items-center mb-2">
+                <Users className="h-4 w-4 text-purple-600 mr-2" />
+                <span className="font-semibold text-purple-800">Diversity Metrics</span>
+              </div>
+              <p className="text-sm text-purple-700">
+                Current selection maintains 32% gender diversity and represents 15 different institutions.
+              </p>
             </div>
+          </div>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+</TabsContent>
 
-            <Card className="bg-white/60 backdrop-blur-sm h-96 flex flex-col">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <MessageCircle className="h-5 w-5 mr-2 text-blue-500" />
-                  Chat with AI Assistant
-                </CardTitle>
-              </CardHeader>
-              
-              <CardContent className="flex-1 flex flex-col">
-                <div className="flex-1 overflow-y-auto space-y-4 mb-4">
-                  {messages.map((message, index) => (
-                    <div
-                      key={index}
-                      className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div
-                        className={`max-w-[80%] p-3 rounded-lg ${
-                          message.type === 'user'
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-gray-100 text-gray-800'
-                        } animate-fadeIn`}
-                      >
-                        <p className="text-sm whitespace-pre-line">{message.content}</p>
-                        <p className="text-xs opacity-70 mt-1">
-                          {message.timestamp?.toLocaleTimeString()}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {isTyping && (
-                    <div className="flex justify-start">
-                      <div className="bg-gray-100 text-gray-800 p-3 rounded-lg animate-pulse">
-                        <div className="flex space-x-1">
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div ref={chatEndRef} />
-                </div>
 
-                <div className="flex space-x-2">
-                  <Input
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    placeholder="Ask about student analytics, trends, or performance..."
-                    onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                    className="flex-1"
-                  />
-                  <Button 
-                    onClick={handleSendMessage}
-                    disabled={!inputMessage.trim() || isTyping}
-                    className="bg-blue-500 hover:bg-blue-600"
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                {/* Quick Action Buttons */}
-                <div className="flex flex-wrap gap-2 mt-3">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setInputMessage('Show me top skills')}
-                    className="text-xs"
-                  >
-                    <Zap className="h-3 w-3 mr-1" />
-                    Top Skills
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setInputMessage('Analyze branch performance')}
-                    className="text-xs"
-                  >
-                    <BarChart3 className="h-3 w-3 mr-1" />
-                    Branch Analysis
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setInputMessage('Show top performers')}
-                    className="text-xs"
-                  >
-                    <Award className="h-3 w-3 mr-1" />
-                    Top Performers
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setInputMessage('Skill gap recommendations')}
-                    className="text-xs"
-                  >
-                    <Target className="h-3 w-3 mr-1" />
-                    Skill Gaps
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+       
         </Tabs>
       </div>
     </div>
