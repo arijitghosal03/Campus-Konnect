@@ -17,6 +17,18 @@ import fs from 'fs';
 import { Student } from './models/students';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
+import JobPosting from './models/jobPostings';
+import {
+  getAllJobPostings,
+  getJobPostingById,
+  createJobPosting,
+  updateJobPosting,
+  deleteJobPosting,
+  getJobPostingsByCompany,
+  getEligibleJobPostings,
+  getJobPostingStats
+} from './jobRoutes';
+
 
 const uploadsDir = 'uploads/workshops/';
 if (!fs.existsSync(uploadsDir)) {
@@ -822,29 +834,50 @@ app.put('/student/profile', authenticate, authorize(['student']), (async (req: C
   }
 }));
 
-// Backend route to fetch all students with college authentication
-app.get('/college/students', authenticate, authorize(['college']), (async (req: CustomRequest, res: Response) => {
+
+app.post('/college/students', authenticate, authorize(['college']), (async (req: CustomRequest, res: Response) => {
   try {
-    console.log('College user:', req.user);
+    const studentData = req.body;
     
-    // Fetch all students from the database
-    const students = await Student.find({}).select('-password'); // Exclude password field
-    
-    if (!students || students.length === 0) {
-      res.status(404).json({ message: 'No students found' });
-      return;
-    }
-    
-    res.json({
-      message: 'Students fetched successfully',
-      count: students.length,
-      students: students
+    const hashedPassword = await bcrypt.hash(studentData.password || 'student123', 10);
+    const user = new User({
+      username: studentData.username || studentData.studentId,
+      password: hashedPassword,
+      role: 'student',
+      email: studentData.email
+    });
+    await user.save();
+
+    const studentProfile = new Student({
+      ...studentData,
+      userId: user._id
+    });
+    await studentProfile.save();  
+
+    res.status(201).json({ 
+      message: 'Student added successfully', 
+      student: studentProfile 
     });
   } catch (error: any) {
-    console.error('Error fetching students:', error);
-    res.status(500).json({ message: 'Server error while fetching students' });
+    console.error('Error adding student:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 }) as CustomRequestHandler);
+
+app.get('/college/students', authenticate, authorize(['college']), (async (req: CustomRequest, res: Response) => {
+  try {
+    const students = await Student.find({})
+  .populate({
+    path: 'userId',
+    select: 'username email',
+    options: { strictPopulate: false }
+  });
+    res.json(students);
+  } catch (error: any) {
+    console.error('Error fetching students:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+}));
 
 // COMPANY ROUTES
 app.get('/company', authenticate, authorize(['company']), (async (req: CustomRequest, res: Response) => {
@@ -1557,6 +1590,129 @@ app.get('/api/workshops/:id/participants', (async (req: CustomRequest, res: Resp
     res.status(500).json({ message: 'Internal server error' });
   }
 }) as CustomRequestHandler);
+
+//JOB ROUTES
+// GET /api/job-postings - Get all job postings with filters
+app.get('/api/job-postings', getAllJobPostings);
+
+// GET /api/job-postings/stats - Get job posting statistics
+app.get('/api/job-postings/stats', getJobPostingStats);
+
+// GET /api/job-postings/companies/:companyName - Get job postings by company
+app.get('/api/job-postings/companies/:companyName', getJobPostingsByCompany);
+
+// GET /api/job-postings/eligible/:branch - Get eligible job postings for branch
+app.get('/api/job-postings/eligible/:branch', getEligibleJobPostings);
+
+// GET /api/job-postings/:id - Get single job posting by ID
+app.get('/api/job-postings/:id', getJobPostingById);
+
+// POST /api/job-postings - Create new job posting (College/Company only)
+app.post('/api/job-postings', authenticate, authorize(['college', 'company']), createJobPosting);
+
+// PUT /api/job-postings/:id - Update job posting (College/Company only)
+app.put('/api/job-postings/:id', authenticate, authorize(['college', 'company']), updateJobPosting);
+
+// DELETE /api/job-postings/:id - Delete job posting (College only)
+app.delete('/api/job-postings/:id', authenticate, authorize(['college']), deleteJobPosting);
+app.get('/api/job-postings/search', async (req: Request, res: Response) => {
+  try {
+    const { 
+      q, 
+      company, 
+      role, 
+      location, 
+      min_package, 
+      max_cgpa, 
+      status = 'upcoming',
+      page = 1,
+      limit = 10
+    } = req.query;
+
+    // Build search query
+    const searchQuery: any = {};
+
+    // Text search across multiple fields
+    if (q) {
+      searchQuery.$or = [
+        { role: { $regex: q, $options: 'i' } },
+        { short_description: { $regex: q, $options: 'i' } },
+        { company_name: { $regex: q, $options: 'i' } },
+        { location: { $regex: q, $options: 'i' } },
+        { 'requirements.skills': { $in: [new RegExp(q as string, 'i')] } }
+      ];
+    }
+
+    // Filter by company
+    if (company) {
+      searchQuery.company_name = { $regex: company, $options: 'i' };
+    }
+
+    // Filter by role
+    if (role) {
+      searchQuery.role = { $regex: role, $options: 'i' };
+    }
+
+    // Filter by location
+    if (location) {
+      searchQuery.location = { $regex: location, $options: 'i' };
+    }
+
+    // Filter by minimum package (basic string comparison for now)
+    if (min_package) {
+      searchQuery.package = { $regex: min_package, $options: 'i' };
+    }
+
+    // Filter by maximum CGPA requirement
+    if (max_cgpa) {
+      searchQuery['requirements.cgpa_cutoff'] = { $lte: Number(max_cgpa) };
+    }
+
+    // Filter by status
+    if (status) {
+      searchQuery.status = status;
+    }
+
+    // Pagination
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // Execute search
+    const jobPostings = await JobPosting.find(searchQuery)
+      .sort({ created_at: -1 })
+      .skip(skip)
+      .limit(Number(limit))
+      .lean();
+
+    const totalCount = await JobPosting.countDocuments(searchQuery);
+
+    res.status(200).json({
+      success: true,
+      data: jobPostings,
+      metadata: {
+        total_count: totalCount,
+        current_page: Number(page),
+        total_pages: Math.ceil(totalCount / Number(limit)),
+        search_query: q,
+        filters_applied: {
+          company,
+          role,
+          location,
+          min_package,
+          max_cgpa,
+          status
+        }
+      }
+    });
+  } catch (error: any) {
+    console.error('Error searching job postings:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error searching job postings',
+      error: error.message
+    });
+  }
+});
+
 // Start server
 async function startServer() {
   try {

@@ -1,21 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  CheckCircle,
+    
+  BarChart3, 
+  Users, 
+  BookOpen, 
+  Calendar, 
+  Award, 
+  ArrowUp, 
+  ArrowDown, 
+  Star, 
+ 
+  AlertTriangle, 
+  Target,
+ 
   Building2, 
   GraduationCap, 
-  Users, 
   Briefcase, 
   Home,
-  BookOpen,
-  Calendar,
+
   Trophy,
-  BarChart3,
+
   Settings,
   User,
   LogOut,
   Search,
   TrendingUp,
-  Award,
+  
   Clock,
   ChevronRight,
   Bell,
@@ -33,8 +43,19 @@ import {
   Plus,
   Code,
   AlertCircle,
-  ArrowRight
+  ArrowRight,
+  Brain,
+  CheckCircle,
+  MessageCircle, 
+  Package,
+  PieChart, 
+  Activity, 
+  Zap,
+  Filter, // <-- Add this line
 } from 'lucide-react';
+
+import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart as RechartsPieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadialBarChart, RadialBar } from 'recharts';
+
 import {Badge} from "@/components/ui/badge";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -77,7 +98,7 @@ type Workshop = {
 
 const CollegeDashboard = () => {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('homepage');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedWorkshop, setSelectedWorkshop] = useState<Workshop | null>(null);
   const [showWorkshopDetails, setShowWorkshopDetails] = useState(false);
@@ -311,15 +332,11 @@ const [workshops, setWorkshops] = useState<{ upcoming: Workshop[], completed: Wo
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
     { id: 'students', label: 'Students', icon: BookOpen },
     { id: 'workshops', label: 'Workshops', icon: Calendar },
-    { id: 'ranking', label: 'My Ranking', icon: Trophy },
-    { id: 'statistics', label: 'Statistics', icon: TrendingUp },
+    { id: 'placements', label: 'Placements', icon: Briefcase },
+   
   ];
 
-  const settingsItems = [
-    { id: 'profile', label: 'Profile', icon: User },
-    { id: 'settings', label: 'Settings', icon: Settings },
-    { id: 'logout', label: 'Logout', icon: LogOut },
-  ];
+
 useEffect(() => {
   const loadWorkshops = async () => {
     const workshopData = await fetchWorkshops();
@@ -569,10 +586,284 @@ const handleSaveSummary = async () => {
     }
   }
 };
+
+
+type JobPosting = {
+  status: string;
+  package?: string;
+  requirements?: { cgpa_cutoff?: number };
+  company_name?: string;
+  [key: string]: any;
+};
+
+const [allJobPostings, setAllJobPostings] = useState<JobPosting[]>([]);
+const [singleJobPosting, setSingleJobPosting] = useState<JobPosting | null>(null);
+const [companyJobPostings, setCompanyJobPostings] = useState<JobPosting[]>([]);
+const [eligibleJobPostings, setEligibleJobPostings] = useState<JobPosting[]>([]);
+const [jobStats, setJobStats] = useState({});
+const totalJobs = allJobPostings.length;
+const upcomingJobs = allJobPostings.filter(job => job.status === 'upcoming').length;
+const activeJobs = allJobPostings.filter(job => job.status === 'active').length;
+const completedJobs = allJobPostings.filter(job => job.status === 'completed').length;
+const eligibleCount = eligibleJobPostings.length;
+
+  // Calculate average package (extract numeric value from package string)
+  const averagePackage = allJobPostings.length > 0 ? 
+    (allJobPostings.reduce((sum, job: any) => {
+      const packageValue = parseFloat((job.package ? job.package.replace(/[^\d.]/g, '') : '0'));
+      return sum + packageValue;
+    }, 0) / allJobPostings.length).toFixed(1) : 0;
+
+  // Calculate average CGPA cutoff
+  const averageCGPA = allJobPostings.length > 0 ? 
+    (allJobPostings.reduce((sum, job) => sum + (job.requirements?.cgpa_cutoff || 0), 0) / allJobPostings.length).toFixed(1) : 0;
+
+  // Company distribution
+  const companyDistribution = allJobPostings.reduce((acc: Record<string, number>, job: any) => {
+    const company = job.company_name;
+    acc[company] = (acc[company] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const companyData = Object.entries(companyDistribution)
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 6)
+    .map(([company, count], index) => ({
+      name: company.length > 10 ? company.substring(0, 10) + '...' : company,
+      fullName: company,
+      jobs: count,
+      fill: ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'][index % 6]
+    }));
+
+  // Package distribution
+  const packageRanges = {
+    '0-5 LPA': 0,
+    '5-10 LPA': 0,
+    '10-15 LPA': 0,
+    '15+ LPA': 0
+  };
+
+  allJobPostings.forEach(job => {
+    const packageValue = parseFloat(job.package?.replace(/[^\d.]/g, '') || '0');
+    if (packageValue < 5) packageRanges['0-5 LPA']++;
+    else if (packageValue < 10) packageRanges['5-10 LPA']++;
+    else if (packageValue < 15) packageRanges['10-15 LPA']++;
+    else packageRanges['15+ LPA']++;
+  });
+
+  const packageData = Object.entries(packageRanges).map(([range, count], index) => ({
+    range,
+    count,
+    fill: ['#ef4444', '#f59e0b', '#10b981', '#8b5cf6'][index]
+  }));
+
+  // Status distribution
+  const statusData = [
+    { name: 'Upcoming', value: upcomingJobs, fill: '#f59e0b' },
+    { name: 'Active', value: activeJobs, fill: '#10b981' },
+    { name: 'Completed', value: completedJobs, fill: '#06b6d4' }
+  ].filter(item => item.value > 0);
+
+  // Monthly job postings trend
+  const monthlyTrend = [
+    { month: 'Jan', jobs: Math.floor(totalJobs * 0.12), applications: Math.floor(totalJobs * 0.15) },
+    { month: 'Feb', jobs: Math.floor(totalJobs * 0.15), applications: Math.floor(totalJobs * 0.18) },
+    { month: 'Mar', jobs: Math.floor(totalJobs * 0.18), applications: Math.floor(totalJobs * 0.22) },
+    { month: 'Apr', jobs: Math.floor(totalJobs * 0.20), applications: Math.floor(totalJobs * 0.20) },
+    { month: 'May', jobs: Math.floor(totalJobs * 0.22), applications: Math.floor(totalJobs * 0.18) },
+    { month: 'Jun', jobs: Math.floor(totalJobs * 0.13), applications: Math.floor(totalJobs * 0.07) }
+  ];
+
+  const isDarkMode = true;
+  const gradients = [
+    'from-blue-500 to-cyan-500',
+    'from-purple-500 to-pink-500',
+    'from-green-500 to-emerald-500',
+    'from-orange-500 to-red-500'
+  ];
+
+  // Fetch all job postings with optional filters
+  const fetchAllJobPostings = async (filters: Record<string, any> = {}) => {
+    setIsLoading(true);
+    try {
+      // Build query string from filters
+      const queryParams = new URLSearchParams();
+      Object.keys(filters).forEach(key => {
+        if (filters[key]) {
+          queryParams.append(key, filters[key]);
+        }
+      });
+      
+      const queryString = queryParams.toString();
+       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const url = `${apiUrl}/api/job-postings${queryString ? `?${queryString}` : ''}`;
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log("All job postings data:", data);
+        setAllJobPostings(data.jobPostings || data.data || []);
+      } else {
+        console.error('Error fetching job postings:', data.message);
+      }
+    } catch (err) {
+      console.error('Fetch error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch single job posting by ID
+  const fetchSingleJobPosting = async (jobId: string) => {
+    setIsLoading(true);
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/job-postings/${jobId}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log("Single job posting data:", data);
+        setSingleJobPosting(data.jobPosting || data.data || {});
+      } else {
+        console.error('Error fetching job posting:', data.message);
+      }
+    } catch (err) {
+      console.error('Fetch error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch job postings by company name
+  const fetchJobPostingsByCompany = async (companyName: string) => {
+    setIsLoading(true);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/job-postings/companies/${encodeURIComponent(companyName)}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log(`Job postings for ${companyName}:`, data);
+        setCompanyJobPostings(data.jobPostings || data.data || []);
+      } else {
+        console.error('Error fetching company job postings:', data.message);
+      }
+    } catch (err) {
+      console.error('Fetch error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch eligible job postings for CSE/IT branch
+  const fetchEligibleJobPostings = async (branch = 'CSE') => {
+    setIsLoading(true);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/job-postings/eligible/${branch}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log(`Eligible job postings for ${branch}:`, data);
+        setEligibleJobPostings(data.jobPostings || data.data || []);
+      } else {
+        console.error('Error fetching eligible job postings:', data.message);
+      }
+    } catch (err) {
+      console.error('Fetch error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch job posting statistics
+  const fetchJobStats = async () => {
+    setIsLoading(true);
+    try {
+     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/job-postings/stats`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log("Job posting statistics:", data);
+        setJobStats(data.stats || data.data || {});
+      } else {
+        console.error('Error fetching job stats:', data.message);
+      }
+    } catch (err) {
+      console.error('Fetch error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Load initial data on component mount
+  useEffect(() => {
+    fetchAllJobPostings();
+    fetchJobStats();
+    fetchEligibleJobPostings('CSE'); 
+  }, []);
+
+  // Example usage functions that you can call from your UI
+  const handleLoadCompanyJobs = (companyName: string) => {
+    fetchJobPostingsByCompany(companyName);
+  };
+
+  const handleLoadJobDetails = (jobId: string) => {
+    fetchSingleJobPosting(jobId);
+  };
+
+  const handleFilterJobs = (filters: Record<string, any>) => {
+    // Example filters: { page: 1, limit: 10, company: 'Google', location: 'Mumbai' }
+    fetchAllJobPostings(filters);
+  };
+
 const fetchStudentsData = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/college/students', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/college/students`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -585,7 +876,7 @@ const fetchStudentsData = async () => {
       
       if (response.ok) {
         console.log("Students data", data);
-        setStudents(data.students || []);
+        setStudents(data|| []);
       } else {
         console.error('Error fetching students:', data.message);
       }
@@ -805,72 +1096,729 @@ const renderHomePage = () => (
     </div>
   </div>
 );
-  const renderDashboard = () => (
-    <div className="space-y-6">
-      {/* Hero Banner */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-8 text-white relative overflow-hidden">
-        <div className="relative z-10 max-w-2xl">
-          <h2 className="text-3xl font-bold mb-2">New Academic Session Available Now!</h2>
-          <p className="text-blue-100 mb-6">
-            Welcome to our new academic portal. Check your results, practice for exams, 
-            and access the best resources. This platform will boost your academic performance.
-          </p>
-          <button className="bg-white text-blue-700 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors flex items-center gap-2">
-            Explore More <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
-          <div className="w-32 h-32 bg-blue-400 rounded-full flex items-center justify-center">
-            <GraduationCap className="w-16 h-16 text-white" />
-          </div>
-        </div>
-      </div>
+// Replace your existing renderDashboard function with this enhanced version
 
-      {/* Popular Courses */}
-      <div className="bg-white rounded-xl p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-bold text-gray-900">Popular Courses</h3>
-          <button className="text-blue-600 font-semibold hover:text-blue-700">View All</button>
-        </div>
+const renderDashboard = () => {
+    // Enhanced statistics calculations
+  const totalStudents = students.length;
+  console.log("Total Students:", totalStudents);
+  const totalWorkshops = workshops.upcoming.length + workshops.completed.length;
+  const completedWorkshops = workshops.completed.length;
+  const averageAttendance = students.length > 0 ? 
+    (students.reduce((sum, student) => sum + student.attendance, 0) / students.length).toFixed(1) : 0;
+  const averageCGPA = students.length > 0 ? 
+    (students.reduce((sum, student) => sum + student.average_cgpa, 0) / students.length).toFixed(2) : 0;
+
+  // Department statistics
+  const departmentStats = collegeStream.departments.map(dept => ({
+    name: dept,
+    students: getStudentsByDepartment(dept).length,
+    avgCGPA: getStudentsByDepartment(dept).length > 0 ? 
+      (getStudentsByDepartment(dept).reduce((sum, s) => sum + s.average_cgpa, 0) / getStudentsByDepartment(dept).length).toFixed(2) : 0
+  }));
+
+  // Enhanced workshop engagement data
+  const workshopEngagement = workshops.completed.map((w, index) => ({
+    title: w.title.substring(0, 20) + '...',
+    participants: Math.floor(Math.random() * w.maxParticipants) + 20,
+    rating: (Math.random() * 2 + 3).toFixed(1),
+    completion: Math.floor(Math.random() * 40) + 60
+  }));
+
+  // Chart data
+
+const monthlyData = [
+  { 
+    month: 'Jan', 
+    students: 120, 
+    workshops: 3, 
+    attendance: 85, 
+    companyVisits: 2, 
+    courseProgress: 78 
+  },
+  { 
+    month: 'Feb', 
+    students: 132, 
+    workshops: 4, 
+    attendance: 88, 
+    companyVisits: 1, 
+    courseProgress: 82 
+  },
+  { 
+    month: 'Mar', 
+    students: 128, 
+    workshops: 2, 
+    attendance: 82, 
+    companyVisits: 3, 
+    courseProgress: 85 
+  },
+  { 
+    month: 'Apr', 
+    students: 145, 
+    workshops: 4, 
+    attendance: 90, 
+    companyVisits: 4, 
+    courseProgress: 88 
+  },
+  { 
+    month: 'May', 
+    students: 158, 
+    workshops: 3, 
+    attendance: 87, 
+    companyVisits: 5, 
+    courseProgress: 91 
+  },
+  { 
+    month: 'Jun', 
+    students: 162, 
+    workshops: 4, 
+    attendance: 92, 
+    companyVisits: 3, 
+    courseProgress: 94 
+  }
+];
+
+
+  const performanceData = departmentStats.map((dept, index) => ({
+    name: dept.name.substring(0, 8),
+    students: dept.students,
+    avgCGPA: parseFloat(String(dept.avgCGPA)),
+    fill: index === 0 ? '#8b5cf6' : index === 1 ? '#06b6d4' : '#10b981'
+  }));
+
+  const completionData = [
+    { name: 'Completed', value: completedWorkshops, fill: '#10b981' },
+    { name: 'Pending', value: workshops.upcoming.length, fill: '#f59e0b' }
+  ];
+
+ 
+  const isDarkMode =true;
+
+
+
+  const cardColors = ['blue', 'purple', 'green', 'orange'];
+  const gradients = [
+    'from-blue-500 to-cyan-500',
+    'from-purple-500 to-pink-500',
+    'from-green-500 to-emerald-500',
+    'from-orange-500 to-red-500'
+  ];
+
+return (
+    <div className={`min-h-screen transition-all duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-indigo-50 via-white to-cyan-50'}`}>
+      {/* Compact Header */}
+
+
+      <div className="p-3 space-y-4">
+        {/* Horizontal Stats Grid */}
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {companies.map((company, index) => (
-            <div key={index} className="bg-gray-50 rounded-lg p-6">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Briefcase className="w-6 h-6 text-blue-600" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { icon: Users, value: totalStudents.toLocaleString(), label: 'Students', change: '+12%', color: 'blue', trend: 'up' },
+            { icon: BookOpen, value: `${Math.round((completedWorkshops / totalWorkshops) * 100)}%`, label: 'Completion', change: '+8%', color: 'purple', trend: 'up' },
+            { icon: Calendar, value: `${averageAttendance}%`, label: 'Attendance', change: '-2%', color: 'green', trend: 'down' },
+            { icon: Award, value: averageCGPA, label: 'Avg CGPA', change: '+0.3', color: 'orange', trend: 'up' }
+          ].map((stat, index) => (
+            <div
+              key={index}
+              className={`group relative overflow-hidden ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} 
+                         rounded-2xl p-3 shadow-md border hover:shadow-lg transition-all duration-300`}
+            >
+              <div className={`absolute inset-0 bg-gradient-to-br ${gradients[index]} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
+              
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-2">
+                  <div className={`w-8 h-8 bg-gradient-to-br ${gradients[index]} rounded-xl flex items-center justify-center shadow-md`}>
+                    <stat.icon className="w-4 h-4 text-white" />
+                  </div>
+                  <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                    stat.trend === 'up' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                  }`}>
+                    {stat.trend === 'up' ? <ArrowUp className="w-2 h-2" /> : <ArrowDown className="w-2 h-2" />}
+                    {stat.change}
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900">{company.name}</h4>
-                  <div className="text-2xl font-bold text-gray-900">{company.completion}%</div>
+                
+                <div className={`text-xl font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {stat.value}
+                </div>
+                <div className={`text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  {stat.label}
                 </div>
               </div>
-              
-              <div className="space-y-2 text-sm text-gray-600 mb-4">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                  <span>{company.topics} Topics</span>
-                  <span className="w-2 h-2 bg-orange-500 rounded-full ml-4"></span>
-                  <span>+{company.students} Students</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                  <span>{new Date(company.date).toLocaleDateString()}</span>
-                  <span className="w-2 h-2 bg-purple-500 rounded-full ml-4"></span>
-                  <span>+{company.students} Students</span>
-                </div>
-              </div>
-              
-              <button className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
-                Enroll Now
-              </button>
             </div>
           ))}
+        </div>
+
+        {/* Compact Charts Section - All Horizontal */}
+  <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+  {/* Monthly Trends Chart - Compressed */}
+  <div className={`lg:col-span-5 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-2xl p-4 shadow-md border`}>
+    <div className="flex justify-between items-center mb-3">
+      <div>
+        <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Performance Trends</h3>
+        <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Monthly overview</p>
+      </div>
+      <div className="flex flex-wrap gap-1">
+              <div className="flex flex-wrap gap-1 ml-auto">
+        <div className="flex items-center gap-1 px-2 py-0.5 bg-purple-100 rounded-full">
+          <div className="w-1.5 h-1.5 bg-purple-500 rounded-full"></div>
+          <span className="text-xs text-purple-700">Students</span>
+        </div>
+        <div className="flex items-center gap-1 px-2 py-0.5 bg-cyan-100 rounded-full">
+          <div className="w-1.5 h-1.5 bg-cyan-500 rounded-full"></div>
+          <span className="text-xs text-cyan-700">Workshops</span>
+        </div>
+      </div>
+        <div className="flex items-center gap-1 px-2 py-0.5 bg-green-100 rounded-full">
+          <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+          <span className="text-xs text-green-700">Attendance</span>
+        </div>
+        <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-100 rounded-full">
+          <div className="w-1.5 h-1.5 bg-amber-500 rounded-full"></div>
+          <span className="text-xs text-amber-700">Visits</span>
+        </div>
+        <div className="flex items-center gap-1 px-2 py-0.5 bg-red-100 rounded-full">
+          <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
+          <span className="text-xs text-red-700">Progress</span>
+        </div>
+      </div>
+    </div>
+            
+            <ResponsiveContainer width="100%" height={150}>
+  <AreaChart data={monthlyData}>
+    <defs>
+      <linearGradient id="colorStudents" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8}/>
+        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.1}/>
+      </linearGradient>
+      <linearGradient id="colorWorkshops" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.8}/>
+        <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.1}/>
+      </linearGradient>
+      <linearGradient id="colorAttendance" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
+        <stop offset="95%" stopColor="#10b981" stopOpacity={0.1}/>
+      </linearGradient>
+      <linearGradient id="colorCompanyVisits" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.8}/>
+        <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.1}/>
+      </linearGradient>
+      <linearGradient id="colorCourseProgress" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8}/>
+        <stop offset="95%" stopColor="#ef4444" stopOpacity={0.1}/>
+      </linearGradient>
+    </defs>
+    <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#f3f4f6'} />
+    <XAxis dataKey="month" stroke={isDarkMode ? '#9ca3af' : '#6b7280'} tick={{fontSize: 12}} />
+    <YAxis stroke={isDarkMode ? '#9ca3af' : '#6b7280'} tick={{fontSize: 12}} />
+    <Tooltip 
+      content={({ active, payload, label }) => {
+        if (active && payload && payload.length) {
+          return (
+            <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-lg p-3 shadow-lg`}>
+              <p className={`font-medium text-sm mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{label}</p>
+              {payload.map((entry, index) => (
+                <p key={index} style={{ color: entry.color }} className="text-xs mb-1">
+                  {entry.name}: {entry.value}{entry.name === 'attendance' || entry.name === 'courseProgress' ? '%' : ''}
+                </p>
+              ))}
+            </div>
+          );
+        }
+        return null;
+      }}
+    />
+    <Area type="monotone" dataKey="students" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorStudents)" strokeWidth={2} name="Students" />
+    <Area type="monotone" dataKey="workshops" stroke="#06b6d4" fillOpacity={1} fill="url(#colorWorkshops)" strokeWidth={2} name="Workshops" />
+    <Area type="monotone" dataKey="attendance" stroke="#10b981" fillOpacity={1} fill="url(#colorAttendance)" strokeWidth={2} name="Attendance" />
+    <Area type="monotone" dataKey="companyVisits" stroke="#f59e0b" fillOpacity={1} fill="url(#colorCompanyVisits)" strokeWidth={2} name="Company Visits" />
+    <Area type="monotone" dataKey="courseProgress" stroke="#ef4444" fillOpacity={1} fill="url(#colorCourseProgress)" strokeWidth={2} name="Course Progress" />
+  </AreaChart>
+</ResponsiveContainer>
+          </div>
+
+          {/* Department Performance - Compact */}
+          <div className={`lg:col-span-3 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-2xl p-4 shadow-md border`}>
+            <div className="mb-3">
+              <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Departments</h3>
+              <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>CGPA Distribution</p>
+            </div>
+            
+            <ResponsiveContainer width="100%" height={120}>
+              <RadialBarChart cx="50%" cy="50%" innerRadius="25%" outerRadius="80%" data={performanceData}>
+                <RadialBar background dataKey="avgCGPA" cornerRadius={5} fill="#8884d8" />
+                <Tooltip 
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-lg p-2 shadow-lg`}>
+                          <p className={`font-medium text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{payload[0].payload.name}</p>
+                          <p style={{ color: payload[0].payload.fill }} className="text-xs">CGPA: {payload[0].value}</p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+              </RadialBarChart>
+            </ResponsiveContainer>
+            
+            <div className="space-y-1 mt-2">
+              {performanceData.map((dept, index) => (
+                <div key={index} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: dept.fill }}></div>
+                    <span className={`text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{dept.name}</span>
+                  </div>
+                  <span className={`text-xs font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{dept.avgCGPA}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Workshop Analytics - Horizontal Layout */}
+          <div className={`lg:col-span-4 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-2xl p-4 shadow-md border`}>
+            <div className="flex justify-between items-center mb-3">
+              <div>
+                <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Workshop Analytics</h3>
+                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Completed</p>
+              </div>
+              <Zap className="w-4 h-4 text-yellow-500" />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2">
+              {workshopEngagement.slice(0, 4).map((workshop, index) => (
+                <div key={index} className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-xl p-2`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className={`w-6 h-6 bg-gradient-to-r ${gradients[index % 4]} rounded-lg flex items-center justify-center text-white text-xs font-bold`}>
+                      {index + 1}
+                    </div>
+                    <div className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      workshop.completion > 80 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {workshop.completion}%
+                    </div>
+                  </div>
+                  <div className={`text-xs font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-1 truncate`}>
+                    {workshop.title.split(' ')[0]}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      {workshop.participants}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                      <span className={`text-xs ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{workshop.rating}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+<div className="flex justify-between items-center mb-3">
+  <div>
+    <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Workshop Highlights</h3>
+    
+  </div>
+  <Zap className="w-4 h-4 text-yellow-500" />
+</div>
+
+        {/* Bottom Section - Completion Status + Quick Stats */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-2xl p-4 shadow-md border`}>
+            <h3 className={`text-lg font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Completion Status</h3>
+            
+            <ResponsiveContainer width="100%" height={100}>
+              <RechartsPieChart>
+                <Pie
+                  data={completionData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={30}
+                  outerRadius={50}
+                  paddingAngle={3}
+                  dataKey="value"
+                >
+                  {completionData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Pie>
+              </RechartsPieChart>
+            </ResponsiveContainer>
+            
+            <div className="flex justify-center gap-3 mt-2">
+              {completionData.map((item, index) => (
+                <div key={index} className="flex items-center gap-1">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.fill }}></div>
+                  <span className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {item.name} ({item.value})
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className={`lg:col-span-2 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-2xl p-4 shadow-md border`}>
+            <h3 className={`text-lg font-bold mb-3 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Insights</h3>
+            <div className="grid grid-cols-4 gap-3">
+              <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-green-50'} rounded-xl p-3 text-center`}>
+                <div className={`text-xl font-bold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
+                  {Math.round((completedWorkshops / totalWorkshops) * 100)}%
+                </div>
+                <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Success Rate</div>
+              </div>
+              <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-blue-50'} rounded-xl p-3 text-center`}>
+                <div className={`text-xl font-bold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                  {totalWorkshops}
+                </div>
+                <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Total Workshops</div>
+              </div>
+              <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-purple-50'} rounded-xl p-3 text-center`}>
+                <div className={`text-xl font-bold ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>
+                  4.6
+                </div>
+                <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Avg Rating</div>
+              </div>
+              <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-orange-50'} rounded-xl p-3 text-center`}>
+                <div className={`text-xl font-bold ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                  90
+                </div>
+                <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Active Participants</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
+};
 
+const renderJobs = () => (
+  <div className={`min-h-screen transition-all duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-indigo-50 via-white to-cyan-50'}`}>
+      <div className="p-3 space-y-4">
+        {/* Header */}
+        <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-2xl p-4 shadow-md border`}>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Job Postings</h1>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Track all campus placement opportunities</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search jobs..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className={`pl-10 pr-4 py-2 rounded-lg border ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-200'} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                />
+              </div>
+              <button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:shadow-lg transition-all duration-300">
+                <Filter className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { icon: Briefcase, value: totalJobs.toString(), label: 'Total Jobs', change: '+12%', color: 'blue', trend: 'up' },
+            { icon: Building2, value: Object.keys(companyDistribution).length.toString(), label: 'Companies', change: '+8%', color: 'purple', trend: 'up' },
+            { icon: Target, value: `${averagePackage} LPA`, label: 'Avg Package', change: '+0.5', color: 'green', trend: 'up' },
+            { icon: Award, value: averageCGPA.toString(), label: 'Avg CGPA Cut', change: '-0.2', color: 'orange', trend: 'down' }
+          ].map((stat, index) => (
+            <div
+              key={index}
+              className={`group relative overflow-hidden ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} 
+                         rounded-2xl p-3 shadow-md border hover:shadow-lg transition-all duration-300`}
+            >
+              <div className={`absolute inset-0 bg-gradient-to-br ${gradients[index]} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
+              
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-2">
+                  <div className={`w-8 h-8 bg-gradient-to-br ${gradients[index]} rounded-xl flex items-center justify-center shadow-md`}>
+                    <stat.icon className="w-4 h-4 text-white" />
+                  </div>
+                  <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                    stat.trend === 'up' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                  }`}>
+                    {stat.trend === 'up' ? <ArrowUp className="w-2 h-2" /> : <ArrowDown className="w-2 h-2" />}
+                    {stat.change}
+                  </div>
+                </div>
+                
+                <div className={`text-xl font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {stat.value}
+                </div>
+                <div className={`text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  {stat.label}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          {/* Monthly Trends Chart */}
+          <div className={`lg:col-span-5 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-2xl p-4 shadow-md border`}>
+            <div className="flex justify-between items-center mb-3">
+              <div>
+                <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Monthly Trends</h3>
+                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Job postings & applications</p>
+              </div>
+              <div className="flex gap-2">
+                <div className="flex items-center gap-1 px-2 py-0.5 bg-blue-100 rounded-full">
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                  <span className="text-xs text-blue-700">Jobs</span>
+                </div>
+                <div className="flex items-center gap-1 px-2 py-0.5 bg-purple-100 rounded-full">
+                  <div className="w-1.5 h-1.5 bg-purple-500 rounded-full"></div>
+                  <span className="text-xs text-purple-700">Applications</span>
+                </div>
+              </div>
+            </div>
+            
+            <ResponsiveContainer width="100%" height={150}>
+              <AreaChart data={monthlyTrend}>
+                <defs>
+                  <linearGradient id="colorJobs" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                  </linearGradient>
+                  <linearGradient id="colorApplications" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.1}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#374151' : '#f3f4f6'} />
+                <XAxis dataKey="month" stroke={isDarkMode ? '#9ca3af' : '#6b7280'} tick={{fontSize: 12}} />
+                <YAxis stroke={isDarkMode ? '#9ca3af' : '#6b7280'} tick={{fontSize: 12}} />
+                <Tooltip 
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-lg p-3 shadow-lg`}>
+                          <p className={`font-medium text-sm mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{label}</p>
+                          {payload.map((entry, index) => (
+                            <p key={index} style={{ color: entry.color }} className="text-xs mb-1">
+                              {entry.name}: {entry.value}
+                            </p>
+                          ))}
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Area type="monotone" dataKey="jobs" stroke="#3b82f6" fillOpacity={1} fill="url(#colorJobs)" strokeWidth={2} name="Jobs" />
+                <Area type="monotone" dataKey="applications" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorApplications)" strokeWidth={2} name="Applications" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Company Distribution */}
+          <div className={`lg:col-span-3 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-2xl p-4 shadow-md border`}>
+            <div className="mb-3">
+              <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Top Companies</h3>
+              <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Job distribution</p>
+            </div>
+            
+            <ResponsiveContainer width="100%" height={120}>
+              <BarChart data={companyData} layout="horizontal">
+                <XAxis type="number" hide />
+                <YAxis dataKey="name" type="category" width={60} tick={{fontSize: 10}} stroke={isDarkMode ? '#9ca3af' : '#6b7280'} />
+                <Tooltip 
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border rounded-lg p-2 shadow-lg`}>
+                          <p className={`font-medium text-sm ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{payload[0].payload.fullName}</p>
+                          <p style={{ color: payload[0].payload.fill }} className="text-xs">Jobs: {payload[0].value}</p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Bar dataKey="jobs" fill="#8884d8" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Package Distribution */}
+          <div className={`lg:col-span-4 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-2xl p-4 shadow-md border`}>
+            <div className="flex justify-between items-center mb-3">
+              <div>
+                <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Package Distribution</h3>
+                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Salary ranges</p>
+              </div>
+              <Zap className="w-4 h-4 text-yellow-500" />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2">
+              {packageData.map((item, index) => (
+                <div key={index} className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-xl p-3`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-white text-xs font-bold`} style={{ backgroundColor: item.fill }}>
+                      {item.count}
+                    </div>
+                    <div className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      item.count > 1 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                    }`}>
+                      {Math.round((item.count / totalJobs) * 100)}%
+                    </div>
+                  </div>
+                  <div className={`text-xs font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    {item.range}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Status Overview & Quick Actions */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-2xl p-4 shadow-md border`}>
+            <h3 className={`text-lg font-bold mb-3 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Job Status</h3>
+            
+            <ResponsiveContainer width="100%" height={100}>
+              <PieChart>
+                <Pie
+                  data={statusData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={30}
+                  outerRadius={50}
+                  paddingAngle={3}
+                  dataKey="value"
+                >
+                  {statusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            
+            <div className="flex justify-center gap-2 mt-2 flex-wrap">
+              {statusData.map((item, index) => (
+                <div key={index} className="flex items-center gap-1">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.fill }}></div>
+                  <span className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {item.name} ({item.value})
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className={`lg:col-span-2 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-2xl p-4 shadow-md border`}>
+            <h3 className={`text-lg font-bold mb-3 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Quick Insights</h3>
+            <div className="grid grid-cols-4 gap-3">
+              <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-green-50'} rounded-xl p-3 text-center`}>
+                <div className={`text-xl font-bold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
+                  {eligibleCount}
+                </div>
+                <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Eligible Jobs</div>
+              </div>
+              <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-blue-50'} rounded-xl p-3 text-center`}>
+                <div className={`text-xl font-bold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                  {upcomingJobs}
+                </div>
+                <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Upcoming</div>
+              </div>
+              <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-purple-50'} rounded-xl p-3 text-center`}>
+                <div className={`text-xl font-bold ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>
+                  {activeJobs}
+                </div>
+                <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Active</div>
+              </div>
+              <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-orange-50'} rounded-xl p-3 text-center`}>
+                <div className={`text-xl font-bold ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                  {Math.round((activeJobs / totalJobs) * 100) || 0}%
+                </div>
+                <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Success Rate</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Job Postings */}
+        <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-2xl p-4 shadow-md border`}>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Recent Job Postings</h3>
+            <button className="text-sm text-blue-500 hover:text-blue-700 font-medium">View All</button>
+          </div>
+          
+          {isLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+              <p className={`mt-2 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Loading jobs...</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {allJobPostings.slice(0, 5).map((job, index) => (
+                <div key={job._id || index} className={`${isDarkMode ? 'bg-gray-700 hover:bg-gray-650' : 'bg-gray-50 hover:bg-gray-100'} rounded-xl p-4 transition-colors duration-200`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 bg-gradient-to-br ${gradients[index % 4]} rounded-xl flex items-center justify-center text-white font-bold`}>
+                        {job.company_name?.charAt(0) || 'C'}
+                      </div>
+                      <div>
+                        <h4 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{job.role}</h4>
+                        <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{job.company_name}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                          <div className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3 text-gray-400" />
+                            <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{job.location}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3 text-gray-400" />
+                            <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                              Deadline: {new Date(job.application_deadline).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <div className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                          {job.package}
+                        </div>
+                        <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          CGPA: {job.requirements?.cgpa_cutoff}
+                        </div>
+                      </div>
+                      <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        job.status === 'active' 
+                          ? 'bg-green-100 text-green-700' 
+                          : job.status === 'upcoming'
+                          ? 'bg-yellow-100 text-yellow-700'
+                          : 'bg-blue-100 text-blue-700'
+                      }`}>
+                        {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                      </div>
+                      <button className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-200'} transition-colors`}>
+                        <Eye className="w-4 h-4 text-gray-400" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        </div>
+        </div>
+
+);
 const renderWorkshops = () => (
   <div className="space-y-6">
     {/* Upcoming Workshops */}
@@ -1744,13 +2692,14 @@ const renderStudents = () => (
 
   const renderContent = () => {
     switch (activeTab) {
+      case 'home': return renderHomePage();
       case 'dashboard': return renderDashboard();
       case 'students': return renderStudents();
       case 'workshops': return renderWorkshops();
-      // case 'ranking': return renderRanking();
-      case 'statistics': return renderStatistics();
-      case 'home': return renderHomePage();
-      default: return renderDashboard();
+      case 'placements': return renderJobs();
+    
+      
+      default: return renderHomePage();
     }
   };
 
@@ -1844,25 +2793,7 @@ const renderStudents = () => (
 
       
 
-          <div className="mt-8 pt-4 border-t border-gray-200">
-            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-              Settings
-            </div>
-            <div className="space-y-1">
-              {settingsItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors text-gray-600 hover:bg-gray-100"
-                  >
-                    <Icon className="w-5 h-5" />
-                    {item.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+         
         </nav>
       </div>
 

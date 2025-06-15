@@ -1,4 +1,4 @@
-import React, { useEffect, useState,useRef } from 'react';
+import React, { useEffect, useState,useRef, use } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +16,11 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCw,
-  XCircle
+  XCircle,
+  Filter,
+  ExternalLink,
+  Building,
+  DollarSign
 } from 'lucide-react';
 
 // Interfaces (keeping original)
@@ -71,6 +75,18 @@ interface ResumeInsight {
   title: string;
   description: string;
 }
+type JobPosting = {
+  status: string;
+  package?: string;
+  requirements?: { 
+    cgpa_cutoff?: number;
+    skills?: string[];
+    eligible_branches?: string[];
+    [key: string]: any;
+  };
+  company_name?: string;
+  [key: string]: any;
+};
 
 interface ResumeAnalysis {
   goodPoints: ResumeInsight[];
@@ -98,6 +114,8 @@ const Student = () => {
   const [showPdfViewer, setShowPdfViewer] = useState(false);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
+  const [allJobPostings, setAllJobPostings] = useState<JobPosting[]>([]);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Convert file to text
@@ -250,61 +268,7 @@ const Student = () => {
     roll_number: "11200120020"
   };
 
-  // Mock student data with updated dates
-  const mockStudentData: IStudent = {
-    name: "SUBHAJIT MONDAL",
-    roll_number: "11200120020",
-    college: "Government College of Engineering and Leather Technology",
-    degree: "Bachelor of Technology",
-    stream: "Computer Science and Engineering",
-    semester: 7,
-    enrollment_year: 2020,
-    passout_year: 2024,
-    subjects: [
-      "Multiprocessors", "Information Security", "Statistical Learning", 
-      "Operating Systems", "Computer Networks", "Database Systems", 
-      "Software Engineering", "Artificial Intelligence", "Machine Learning", 
-      "Web Development"
-    ],
-    backlogs: 0,
-    average_cgpa: 7.25,
-    status: "Active",
-    total_marks: 725,
-    pending_fees: 0,
-    attendance: 85,
-    dob: "2000-05-24",
-    mobile: "8432321819",
-    email: "subhajit.mondal@gcelt.edu.in",
-    city: "Kolkata",
-    gender: "Male",
-    profile_image: "https://via.placeholder.com/150",
-    resume: ["Subhajit_Resume.pdf"],
-    skills: ["Java", "Python", "React", "Node.js", "SQL", "Machine Learning"],
-    projects: ["Face Recognition Attendance System", "E-commerce Web App", "Chat Application"],
-    posts: [
-      {
-        title: "My Journey in Machine Learning",
-        content: "Sharing my experience learning ML algorithms and their applications in real-world projects.",
-        date: "2024-06-10",
-        description: "A comprehensive guide to getting started with ML"
-      }
-    ],
-    certificates: [
-      {
-        title: "Full Stack Web Development",
-        description: "Completed comprehensive course on MERN stack development with hands-on projects.",
-        issue_date: "2024-05-15",
-        credential_id: "CERT-2024-FS-001"
-      }
-    ],
-    internships: [
-      {
-        title: "Software Development Intern",
-        description: "Worked on developing web applications using React and Node.js at TechCorp Solutions.",
-        date: "2024-01-15"
-      }
-    ]
-  };
+  
 
   useEffect(() => {
     const fetchStudentData = async () => {
@@ -335,7 +299,48 @@ const Student = () => {
 
     fetchStudentData();
   }, []);
+useEffect(() => {
+   const fetchAllJobPostings = async (filters: Record<string, any> = {}) => {
+    setIsLoading(true);
+    try {
+      // Build query string from filters
+      const queryParams = new URLSearchParams();
+      Object.keys(filters).forEach(key => {
+        if (filters[key]) {
+          queryParams.append(key, filters[key]);
+        }
+      });
+      
+      const queryString = queryParams.toString();
+       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const url = `${apiUrl}/api/job-postings${queryString ? `?${queryString}` : ''}`;
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
 
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log("All job postings data:", data);
+        setAllJobPostings(data.jobPostings || data.data || []);
+      } else {
+        console.error('Error fetching job postings:', data.message);
+      }
+    } catch (err) {
+      console.error('Fetch error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+    fetchAllJobPostings();
+  }, []);
   const handleSave = () => {
     setStudent({ ...student, ...editData } as IStudent);
     fetch(`/api/student/profile`, {
@@ -421,8 +426,7 @@ const Student = () => {
           { id: 'posts', icon: PenSquare, label: 'Posts' },
           { id: 'achievements', icon: Trophy, label: 'Achievements' },
           { id: 'jobs', icon: Briefcase, label: 'Jobs' },
-          { id: 'resume', icon: FileText, label: 'Resume' },
-          { id: 'settings', icon: Settings, label: 'Settings' }
+          { id: 'resume', icon: FileText, label: 'Resume' }
         ].map(({ id, icon: Icon, label }) => (
           <motion.button
             key={id}
@@ -976,51 +980,307 @@ onClick={handleAddPost}
     </motion.div>
   );
 
-  const JobsSection = () => (
+  const JobsSection = () => {
+  const [allJobPostings, setAllJobPostings] = useState<JobPosting[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [appliedJobs, setAppliedJobs] = useState<Set<string>>(new Set());
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('upcoming');
+  const [showFilters, setShowFilters] = useState(false);
+
+  const fetchAllJobPostings = async (filters: Record<string, any> = {}) => {
+    setIsLoading(true);
+    try {
+      const queryParams = new URLSearchParams();
+      Object.keys(filters).forEach(key => {
+        if (filters[key]) {
+          queryParams.append(key, filters[key]);
+        }
+      });
+      
+      const queryString = queryParams.toString();
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const url = `${apiUrl}/api/job-postings${queryString ? `?${queryString}` : ''}`;
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setAllJobPostings(data.jobPostings || data.data || []);
+      } else {
+        console.error('Error fetching job postings:', data.message);
+      }
+    } catch (err) {
+      console.error('Fetch error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllJobPostings({ status: statusFilter });
+  }, [statusFilter]);
+
+  const handleApply = async (jobId: string) => {
+    try {
+      // Add your apply logic here - API call to apply for job
+      setAppliedJobs(prev => new Set([...prev, jobId]));
+      
+      // Optional: Show success notification
+      // You can add a toast notification here
+    } catch (error) {
+      console.error('Error applying for job:', error);
+    }
+  };
+
+  const filteredJobs = allJobPostings.filter(job => 
+    job.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    job.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    job.location?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  const getStatusColor = (status: string) => {
+    switch(status) {
+      case 'upcoming': return 'bg-green-100 text-green-800 border-green-200';
+      case 'ongoing': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'completed': return 'bg-gray-100 text-gray-800 border-gray-200';
+      default: return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    }
+  };
+
+  return (
     <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden"
     >
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Job Opportunities</h2>
-      <div className="space-y-4">
-        {[
-          { title: 'Frontend Developer', company: 'TechCorp', location: 'Remote', salary: '₹6-8 LPA' },
-          { title: 'Full Stack Developer', company: 'StartupXYZ', location: 'Bangalore', salary: '₹8-12 LPA' },
-          { title: 'Software Engineer', company: 'BigTech', location: 'Hyderabad', salary: '₹10-15 LPA' }
-        ].map((job, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="bg-gray-50 rounded-2xl p-6 hover:shadow-md transition-all duration-300"
-          >
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h3 className="text-xl font-bold text-gray-800 mb-1">{job.title}</h3>
-                <p className="text-gray-600">{job.company}</p>
-              </div>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-xl text-sm font-medium"
-              >
-                Apply
-              </motion.button>
+      {/* Header Section */}
+      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 p-8">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-sm">
+              <Briefcase className="w-8 h-8 text-white" />
             </div>
-            <div className="flex items-center gap-4 text-sm text-gray-500">
-              <span className="flex items-center gap-1">
-                <MapPin className="w-4 h-4" />
-                {job.location}
-              </span>
-              <span>{job.salary}</span>
+            <div>
+              <h2 className="text-3xl font-bold text-white">Career Opportunities</h2>
+              <p className="text-blue-100 mt-1">Discover your next career move</p>
             </div>
-          </motion.div>
-        ))}
+          </div>
+          <div className="flex items-center gap-2 text-white/80">
+            <TrendingUp className="w-5 h-5" />
+            <span className="text-sm font-medium">{filteredJobs.length} Jobs Available</span>
+          </div>
+        </div>
+
+        {/* Search and Filter Bar */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search jobs, companies, locations..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30"
+            />
+          </div>
+          <div className="flex gap-2">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+            >
+              <option value="upcoming" className="text-gray-800">Upcoming</option>
+              <option value="ongoing" className="text-gray-800">Ongoing</option>
+              <option value="completed" className="text-gray-800">Completed</option>
+            </select>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowFilters(!showFilters)}
+              className="px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl text-white hover:bg-white/20 transition-colors"
+            >
+              <Filter className="w-5 h-5" />
+            </motion.button>
+          </div>
+        </div>
+      </div>
+
+      {/* Jobs List */}
+      <div className="p-8">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        ) : filteredJobs.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+              <Briefcase className="w-10 h-10 text-gray-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">No Jobs Found</h3>
+            <p className="text-gray-600">Try adjusting your search criteria or check back later.</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <AnimatePresence>
+              {filteredJobs.map((job, index) => (
+                <motion.div
+                  key={job._id || index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="group bg-gradient-to-r from-gray-50 to-blue-50/30 rounded-3xl p-8 hover:shadow-xl transition-all duration-500 border border-gray-100 hover:border-blue-200"
+                >
+                  {/* Job Header */}
+                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-6">
+                    <div className="flex-1">
+                      <div className="flex items-start gap-4 mb-4">
+                        <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-3 rounded-2xl shadow-lg">
+                          <Building className="w-6 h-6 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-2xl font-bold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors">
+                            {job.role || 'Software Developer'}
+                          </h3>
+                          <p className="text-lg text-gray-600 font-medium">
+                            {job.company_name || 'Tech Company'}
+                          </p>
+                          <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium border mt-2 ${getStatusColor(job.status)}`}>
+                            {job.status?.charAt(0).toUpperCase() + job.status?.slice(1) || 'Active'}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Job Details Grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <MapPin className="w-4 h-4 text-blue-500" />
+                          <span className="text-sm font-medium">{job.location || 'Remote'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <DollarSign className="w-4 h-4 text-green-500" />
+                          <span className="text-sm font-medium">{job.package || 'Competitive'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <Calendar className="w-4 h-4 text-purple-500" />
+                          <span className="text-sm font-medium">
+                            {job.application_deadline ? formatDate(job.application_deadline) : 'Open'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <Users className="w-4 h-4 text-orange-500" />
+                          <span className="text-sm font-medium">
+                            {job.requirements?.eligible_branches?.join(', ') || 'All Branches'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Job Description */}
+                      {job.short_description && (
+                        <p className="text-gray-700 mb-4 leading-relaxed">
+                          {job.short_description}
+                        </p>
+                      )}
+
+                      {/* Requirements */}
+                      {job.requirements && (
+                        <div className="mb-6">
+                          <h4 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                            <BookOpen className="w-4 h-4" />
+                            Key Requirements
+                          </h4>
+                          <div className="flex flex-wrap gap-2">
+                            {job.requirements.cgpa_cutoff && (
+                              <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
+                                CGPA: {job.requirements.cgpa_cutoff}+
+                              </span>
+                            )}
+                            {job.requirements.skills?.slice(0, 3).map((skill, idx) => (
+                              <span key={idx} className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-medium">
+                                {skill}
+                              </span>
+                            ))}
+                            {(job.requirements.skills && job.requirements.skills.length > 3) && (
+                              <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-medium">
+                                +{(job.requirements.skills?.length ?? 0) - 3} more
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-col gap-3 min-w-[200px]">
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => handleApply(job._id)}
+                        disabled={appliedJobs.has(job._id)}
+                        className={`
+                          px-6 py-3 rounded-2xl font-semibold text-sm transition-all duration-300 shadow-lg
+                          ${appliedJobs.has(job._id)
+                            ? 'bg-green-500 text-white cursor-not-allowed'
+                            : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:shadow-xl hover:from-blue-600 hover:to-purple-700'
+                          }
+                        `}
+                      >
+                        {appliedJobs.has(job._id) ? (
+                          <span className="flex items-center justify-center gap-2">
+                            <CheckCircle className="w-4 h-4" />
+                            Applied
+                          </span>
+                        ) : (
+                          'Apply Now'
+                        )}
+                      </motion.button>
+                      
+              
+                    </div>
+                  </div>
+
+                  {/* Bottom Section */}
+                  <div className="flex items-center justify-between pt-6 border-t border-gray-200">
+                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        Posted {job.created_at ? formatDate(job.created_at) : 'Recently'}
+                      </span>
+                      {job.applications_count && (
+                        <span className="flex items-center gap-1">
+                          <Users className="w-3 h-3" />
+                          {job.applications_count} applications
+                        </span>
+                      )}
+                    </div>
+                  
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
       </div>
     </motion.div>
   );
+};
 const PdfViewer = () => (
     <motion.div
       initial={{ opacity: 0 }}
@@ -1302,53 +1562,7 @@ const PdfViewer = () => (
       </div>
     </motion.div>
   );
-  const SettingsSection = () => (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100"
-    >
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Settings</h2>
-      <div className="space-y-6">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Notifications</h3>
-          <div className="space-y-3">
-            {[
-              'Email notifications for new assignments',
-              'SMS alerts for important updates',
-              'Push notifications for exam schedules'
-            ].map((setting, index) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                <span className="text-gray-700">{setting}</span>
-                <div className="w-12 h-6 bg-blue-500 rounded-full relative cursor-pointer">
-                  <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 right-0.5 transition-all"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Privacy</h3>
-          <div className="space-y-3">
-            {[
-              'Make profile public',
-              'Allow contact from recruiters',
-              'Show academic performance'
-            ].map((setting, index) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                <span className="text-gray-700">{setting}</span>
-                <div className="w-12 h-6 bg-gray-300 rounded-full relative cursor-pointer">
-                  <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 left-0.5 transition-all"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-
+  
   const renderContent = () => {
     switch (activeTab) {
       case 'profile': return <ProfileSection />;
@@ -1358,7 +1572,7 @@ const PdfViewer = () => (
       case 'achievements': return <AchievementsSection />;
       case 'jobs': return <JobsSection />;
       case 'resume': return <ResumeSection />;
-      case 'settings': return <SettingsSection />;
+   
       default: return <ProfileSection />;
     }
   };
