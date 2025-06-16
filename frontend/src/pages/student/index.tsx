@@ -135,7 +135,18 @@ const Student = () => {
       reader.readAsText(file);
     });
   };
+const [showPopup, setShowPopup] = useState(false);
+  const [emailData, setEmailData] = useState({
+    subject: '',
+    message: ''
+  });
 
+  const handleSendEmail = () => {
+    const mailtoLink = `mailto:admin@gcelt.gov.in?subject=${encodeURIComponent(emailData.subject)}&body=${encodeURIComponent(emailData.message)}`;
+    window.location.href = mailtoLink;
+    setShowPopup(false);
+    setEmailData({ subject: '', message: '' });
+  };
   // Analyze resume with Gemini API
   const analyzeResumeWithGemini = async (file: File): Promise<ResumeAnalysis> => {
     try {
@@ -546,15 +557,86 @@ useEffect(() => {
         {/* Need Help Card */}
         <motion.div variants={itemVariants} className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
           <h3 className="font-semibold text-gray-800 mb-2">Need help?</h3>
-          <p className="text-gray-600 text-sm mb-4">Get your contact to get feedback about latest task.</p>
+          <p className="text-gray-600 text-sm mb-4">Get your contact to get feedback and support</p>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
+            onClick={() => setShowPopup(true)}
             className="w-full bg-blue-500 text-white py-3 rounded-2xl text-sm font-medium flex items-center justify-center gap-2"
           >
-            Contact Kala Woo
+            Contact college admin
           </motion.button>
           <p className="text-xs text-gray-500 mt-2 text-center">Available from 11am till 5pm</p>
+           {/* Email Popup Modal */}
+      {showPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-gray-800">Email College Admin</h2>
+              <button
+                onClick={() => setShowPopup(false)}
+                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X size={20} className="text-gray-500" />
+              </button>
+            </div>
+
+            {/* Email Form */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">To:</label>
+                <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-600">
+                  admin@gcelt.gov.in
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Subject:</label>
+                <input
+                  type="text"
+                  value={emailData.subject}
+                  onChange={(e) => setEmailData({ ...emailData, subject: e.target.value })}
+                  placeholder="Enter email subject"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Message:</label>
+                <textarea
+                  value={emailData.message}
+                  onChange={(e) => setEmailData({ ...emailData, message: e.target.value })}
+                  placeholder="Type your message here..."
+                  rows={4}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                />
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowPopup(false)}
+                className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSendEmail}
+                className="flex-1 py-3 px-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                <Mail size={16} />
+                Send Email
+              </button>
+            </div>
+
+            <p className="text-xs text-gray-500 mt-3 text-center">
+              This will open your default email client
+            </p>
+          </div>
+        </div>
+      )}
         </motion.div>
 
         {/* Tests Section */}
