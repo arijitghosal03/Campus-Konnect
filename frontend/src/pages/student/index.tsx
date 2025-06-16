@@ -312,8 +312,8 @@ useEffect(() => {
       });
       
       const queryString = queryParams.toString();
-       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const url = `${apiUrl}/api/job-postings${queryString ? `?${queryString}` : ''}`;
+   
+      const url = `/api/api/job-postings${queryString ? `?${queryString}` : ''}`;
       
       const response = await fetch(url, {
         method: 'GET',
@@ -999,8 +999,8 @@ onClick={handleAddPost}
       });
       
       const queryString = queryParams.toString();
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const url = `${apiUrl}/api/job-postings${queryString ? `?${queryString}` : ''}`;
+     
+      const url = `/api/api/job-postings${queryString ? `?${queryString}` : ''}`;
       
       const response = await fetch(url, {
         method: 'GET',

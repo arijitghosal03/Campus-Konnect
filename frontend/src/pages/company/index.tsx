@@ -136,8 +136,7 @@ export default function AdminDashboard() {
   const fetchStudentsData = async () => {
       setIsLoading(true);
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-        const response = await fetch(`${apiUrl}/college/students`, {
+        const response = await fetch(`/api/college/students`, {
           method: 'GET',
           credentials: 'include',
           headers: {

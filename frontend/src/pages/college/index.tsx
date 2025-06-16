@@ -171,8 +171,8 @@ const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 // Fetch all workshops from MongoDB
 const fetchWorkshops = async (): Promise<{ upcoming: Workshop[], completed: Workshop[] }> => {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    const response = await fetch(`${apiUrl}/api/workshops`);
+   
+    const response = await fetch(`/api/api/workshops`);
     
     if (!response.ok) {
       throw new Error(`Failed to fetch workshops: ${response.status} ${response.statusText}`);
@@ -221,8 +221,8 @@ const fetchWorkshops = async (): Promise<{ upcoming: Workshop[], completed: Work
 // Update workshop status (approve/decline)
 const updateWorkshopStatus = async (workshopId: string, status: 'approved' | 'declined'): Promise<boolean> => {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    const response = await fetch(`${apiUrl}/api/workshops/${workshopId}/status`, {
+  
+    const response = await fetch(`/api/api/workshops/${workshopId}/status`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -244,8 +244,8 @@ const updateWorkshopStatus = async (workshopId: string, status: 'approved' | 'de
 // Update workshop details
 const updateWorkshop = async (workshopId: string, workshopData: Partial<Workshop>): Promise<boolean> => {
   try {
-   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    const response = await fetch(`${apiUrl}/api/workshops/${workshopId}`, {
+   
+    const response = await fetch(`/api/api/workshops/${workshopId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -267,8 +267,8 @@ const updateWorkshop = async (workshopId: string, workshopData: Partial<Workshop
 // Update workshop summary
 const updateWorkshopSummary = async (workshopId: string, summaryData: WorkshopSummary): Promise<boolean> => {
   try {
-   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    const response = await fetch(`${apiUrl}/api/workshops/${workshopId}/summary`, {
+   
+    const response = await fetch(`/api/api/workshops/${workshopId}/summary`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -667,8 +667,8 @@ const eligibleCount = eligibleJobPostings.length;
       });
       
       const queryString = queryParams.toString();
-       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const url = `${apiUrl}/api/job-postings${queryString ? `?${queryString}` : ''}`;
+      
+      const url = `/api/api/job-postings${queryString ? `?${queryString}` : ''}`;
       
       const response = await fetch(url, {
         method: 'GET',
@@ -698,8 +698,7 @@ const eligibleCount = eligibleJobPostings.length;
   const fetchSingleJobPosting = async (jobId: string) => {
     setIsLoading(true);
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/api/job-postings/${jobId}`, {
+      const response = await fetch(`/api/api/job-postings/${jobId}`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -727,8 +726,7 @@ const eligibleCount = eligibleJobPostings.length;
   const fetchJobPostingsByCompany = async (companyName: string) => {
     setIsLoading(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/api/job-postings/companies/${encodeURIComponent(companyName)}`, {
+      const response = await fetch(`/api/api/job-postings/companies/${encodeURIComponent(companyName)}`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -756,8 +754,7 @@ const eligibleCount = eligibleJobPostings.length;
   const fetchEligibleJobPostings = async (branch = 'CSE') => {
     setIsLoading(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/api/job-postings/eligible/${branch}`, {
+      const response = await fetch(`/api/api/job-postings/eligible/${branch}`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -785,8 +782,7 @@ const eligibleCount = eligibleJobPostings.length;
   const fetchJobStats = async () => {
     setIsLoading(true);
     try {
-     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/api/job-postings/stats`, {
+      const response = await fetch(`/api/api/job-postings/stats`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -834,8 +830,7 @@ const eligibleCount = eligibleJobPostings.length;
 const fetchStudentsData = async () => {
     setIsLoading(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/college/students`, {
+      const response = await fetch(`/api/college/students`, {
         method: 'GET',
         credentials: 'include',
         headers: {
