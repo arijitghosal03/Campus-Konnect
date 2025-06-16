@@ -136,7 +136,6 @@ class InterviewRoom {
   public createdAt: Date;
   public status: 'waiting' | 'active' | 'ended';
   public duration: number;
-
   constructor(id: string, passkey: string, creator: IInterviewUser) {
     this.id = id;
     this.passkey = passkey;
@@ -835,7 +834,7 @@ app.put('/student/profile', authenticate, authorize(['student']), (async (req: C
 }));
 
 
-app.post('/college/students', authenticate, authorize(['college']), (async (req: CustomRequest, res: Response) => {
+app.post('/college/students', authenticate, authorize(['college','company']), (async (req: CustomRequest, res: Response) => {
   try {
     const studentData = req.body;
     
@@ -1712,7 +1711,11 @@ app.get('/api/job-postings/search', async (req: Request, res: Response) => {
     });
   }
 });
-//CHATBOT backend
+app.get('/', (req: Request, res: Response) => {
+  res.status(200).json({
+    status: 'Server is running'
+  });
+});
 
 // Start server
 async function startServer() {
